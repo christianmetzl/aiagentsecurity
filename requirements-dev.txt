@@ -1,0 +1,9 @@
+# Development / local-verification dependencies (NOT needed by the submission itself,
+# which imports only the competition-provided aicomp_sdk and the Python stdlib).
+aicomp_sdk==3.1.2   # the competition SDK (public on PyPI); provides env, predicates, scoring
+gymnasium>=0.29,<1
+pydantic>=2
+pytest>=7
+# torch/transformers are pulled by aicomp_sdk for the real LLM backends but are NOT
+# required for the offline harness (deterministic + mock agents). Install them only
+# to run against the real GPT-OSS / Gemma backends on a GPU.
