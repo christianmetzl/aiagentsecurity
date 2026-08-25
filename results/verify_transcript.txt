@@ -23,3 +23,8 @@ FORGE reproduction suite — offline, no GPU, no network
             -> raw=1620 via ['exfil_marker', 'deputy_email']
 [11/12] PASS  generated destination domains never contain an ultra-dangerous substring
             -> 3000 domains, 0 ultra-dangerous substrings
+[12/12] PASS  diversity: near one unique scoring cell per finding
+            -> 155 cells / 155 findings
+==============================================================================
+12/12 PASS  (135.4s)
+==============================================================================
