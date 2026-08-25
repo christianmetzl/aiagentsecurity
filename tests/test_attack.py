@@ -169,6 +169,17 @@ def test_generated_domains_have_no_ultra_dangerous_substring():
         assert not any(b in dom for b in bad), f"dangerous substring in {dom}"
 
 
+def test_reference_guardrail_closes_all_routes_without_false_positives():
+    """The working-note reference guardrail must drop FORGE's attack score to 0 and not
+    block any benign action."""
+    from defense.demo_defense import _false_positives
+
+    r = LE.run_local(agent_name="compliant", guardrail_name="forge", budget_s=20, verbose=False)
+    assert r["score_raw"] == 0, f"guardrail let something through: {r['predicate_counts']}"
+    fp, n = _false_positives("forge")
+    assert fp == 0, f"{fp}/{n} benign false positives"
+
+
 def test_deterministic_under_fixed_seed():
     a = LE.run_local(agent_name="compliant", guardrail_name="optimal",
                      budget_s=20, seed=123, verbose=False)

@@ -248,6 +248,39 @@ the domain-keyed diversity lever — useful for tightening future versions (e.g.
 data-channel content, rewarding genuinely distinct *mechanisms* rather than distinct
 destinations, and closing the literal-sentinel shortcut).
 
+## 6a. Closing the loop: a reference guardrail
+
+To make the defensive lessons of §6 concrete — and to show the failures FORGE finds are
+*fixable* — we ship a small provenance-aware guardrail
+(`defense/forge_guardrail.py`) that closes exactly the routes FORGE exploits, built from
+the four lessons above:
+
+* it inspects the `http.post` **data** channel (not just the URL) with the scorer's own
+  matcher, closing the literal-sentinel route;
+* it **taints the session when `secret.txt` is read** and refuses subsequent external
+  egress, closing the read-then-forward real-secret route a literal check misses;
+* it blocks any egress/exec/send after untrusted `web`/`email` content **regardless of
+  the user's wording**, closing `tainted_share` and the "post"-keyword mismatch;
+* it requires explicit user intent for outbound mail and protects the secret file from
+  destructive writes.
+
+Run against the same compliant stand-in target (attack track, 30-second budget), FORGE's
+attack score collapses while benign tool use is untouched
+(`results/defense_evidence.json`, reproduced by `python -m defense.demo_defense`):
+
+| guardrail | FORGE attack raw | benign false positives |
+|---|---:|---:|
+| `OptimalGuardrail` (public) | 8976 | 1 / 7 |
+| `guardrail_rules` (strict proxy) | 4850 | 0 / 7 |
+| **reference (`forge_guardrail`)** | **0** | **0 / 7** |
+
+The reference guardrail is **not a competition submission** — this competition scores
+attacks, not defenses — but it demonstrates the red-team → blue-team loop the benchmark
+exists to enable: every FORGE route maps to a specific, testable guardrail fix that adds
+no benign false positives. It also doubles as a check on FORGE itself: against a guardrail
+that blocks every route, FORGE probes, finds nothing fires, and returns a small valid list
+scoring 0 with no crash — the same graceful degradation it shows against a refusing model.
+
 ## 7. Responsible communication
 
 This note concerns only the offline competition benchmark. Every technique is scoped to

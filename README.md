@@ -26,7 +26,8 @@ overrun** (which would zero the run).
 | **`attack.py`** | The submission. Self-contained `AttackAlgorithm` (imports only `aicomp_sdk` contracts + stdlib, behind fallbacks). |
 | `notebook/forge_submission.ipynb` | The Kaggle notebook: writes `attack.py` to the working dir + an offline smoke test. Generated from `attack.py`. |
 | `verify.py` | **Single-command offline reproduction suite** (10 asserting checks, no GPU/network). |
-| `harness/` | Offline evaluator (`local_eval.py`) + stand-in agents (`mock_agents.py`: compliant / stubborn / slow / null). |
+| `harness/` | Offline evaluator (`local_eval.py`) + stand-in agents (`mock_agents.py`: compliant / stubborn / slow / null / multi-call-reject). |
+| `defense/` | **Working-note artifact** (not a leaderboard submission): a reference guardrail that closes every FORGE route (`forge_guardrail.py`) + an attack→defense demo (`demo_defense.py`) showing FORGE's score collapse to 0 with 0 benign false positives. |
 | `tests/` | `pytest` suite (contract, validity, budget-safety, scoring, adaptivity, determinism). |
 | `docs/BENCHMARK_MECHANICS.md` | Source-traced map of how the benchmark scores — the design's foundation, and a reusable artifact for the benchmark community. |
 | `docs/WORKING_NOTE.md` | The method write-up (Working Note Award). |
@@ -43,7 +44,11 @@ python -m pytest -q                       # -> 12 passed
 ```
 
 `python -m harness.local_eval --help` lists agents (`compliant|stubborn|slow|null|
-deterministic`) and guardrails (`optimal|rules`).
+multicall_reject|deterministic`) and guardrails (`optimal|rules|forge`).
+
+```bash
+python -m defense.demo_defense   # attack -> defense loop: FORGE score -> 0 vs the reference guardrail
+```
 
 ## How it works (one screen)
 

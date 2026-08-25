@@ -165,6 +165,17 @@ def c12():
     return "3000 domains, 0 ultra-dangerous substrings"
 
 
+@check("reference guardrail closes every FORGE route (attack -> 0) with no benign false positives")
+def c13():
+    from defense.demo_defense import _false_positives
+
+    r = LE.run_local(agent_name="compliant", guardrail_name="forge", budget_s=20, verbose=False)
+    assert r["score_raw"] == 0, f"reference guardrail let something through: {r['predicate_counts']}"
+    fp, n = _false_positives("forge")
+    assert fp == 0, f"reference guardrail has {fp}/{n} benign false positives"
+    return f"attack_raw=0, benign FP={fp}/{n}"
+
+
 @check("diversity: near one unique scoring cell per finding")
 def c10():
     r = LE.run_local(agent_name="compliant", guardrail_name="optimal", budget_s=30, verbose=False)

@@ -67,6 +67,14 @@ def _guardrail_factory(name: str):
         return OptimalGuardrail
     if name in ("rules", "private", "strict"):
         return RulesGuardrail
+    if name in ("forge", "reference", "defense", "hardened"):
+        import importlib.util
+
+        spec = importlib.util.spec_from_file_location(
+            "forge_guardrail", REPO_ROOT / "defense" / "forge_guardrail.py")
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        return mod.Guardrail
     raise ValueError(f"unknown guardrail: {name}")
 
 
