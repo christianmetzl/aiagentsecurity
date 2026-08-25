@@ -55,14 +55,34 @@ guardrail that blocks the sentinel but allows the read). Its role is to prove FO
 *adapts* when a route is blocked, not to predict the private score. The adaptivity
 mechanism (probe → detect blocked route → switch) is guardrail-agnostic.
 
-**O6. "Batching several posts in one turn contradicts the system prompt 'call at most one
-tool per turn' — models won't do it."**
-The SDK allows multiple tool calls across the interaction's *hops* (one per hop), so a
-multi-post trace is representable and the predicate stacks over it (validated directly:
-a 4-post interaction yields 4 `EXFILTRATION`). Whether a given model issues several
-across hops is uncertain (pre-registered S2). The design does not depend on it: a batch
-candidate that yields one post degrades to a normal single-post finding, and the
-raw-per-hop ranking demotes batching automatically if the probe shows it underperforms.
+**O6. "Batching several posts in one turn contradicts the parser — every target model
+raises `InvalidModelOutputError` on more than one tool call per response, so the batch
+route is a fantasy and its 'graceful degradation' is false."**
+The parser fact is correct and we verified it: `normalize_parsed_response` rejects >1
+tool call in a single generation. But the batch route does **not** ask for several calls
+in one response — it is a sequential worklist ("make one `http.post`, then the next after
+it returns"), which the sandbox executes as *one tool per hop across the interaction's
+hops*, exactly the reliable path (a 4-hop interaction yields 4 `EXFILTRATION`,
+validated). Two independent safety nets make the "false degradation" claim itself false:
+(1) FORGE **probes** the batch route on the live target; if the model instead emits a
+multi-call response and the parser rejects it, the probe trace has zero tool events, the
+route is never confirmed, and it is never fanned out; (2) the single-post `exfil_marker`
+route is always available as the reliable floor. This is now a **tested invariant** —
+`test_batch_degrades_gracefully_when_multicall_rejected` (a mock that raises
+`InvalidModelOutputError` on batch prompts) asserts the batch route is dropped and the
+single-post route still scores. What remains genuinely uncertain (pre-registered S2) is
+only whether a *compliant* model walks the list one-per-hop (upside) or posts once and
+stops (no worse than single-post); either way the score is bounded below by the
+single-post route.
+
+**O6a. "Your compliant mock is hand-built to walk the batch list one-per-hop, so your
+tests and `verify.py` give false confidence about the batch prompt specifically."**
+Conceded and addressed. The compliant mock does model the favourable path, so on its own
+it would mask the parser-rejection risk. That is exactly why the `MultiCallRejectAgent`
+stand-in and its test/`verify` check exist: they model the *unfavourable* parser path and
+prove FORGE's total score is unharmed (batch dropped, single-post carries). The mocks
+bracket the two real-model behaviours; which one the real models exhibit is inferred, not
+measured (O1).
 
 **O7. "You over-fit to the SDK you downloaded; the hidden evaluator may differ."**
 The submission imports only `aicomp_sdk` contract types plus two pure-python helpers,

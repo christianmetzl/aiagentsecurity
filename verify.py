@@ -141,6 +141,30 @@ def c9():
     return f"returned {r['returned_candidates']} valid candidates, raw={r['score_raw']:.0f}"
 
 
+@check("graceful degradation: batch route dropped when target rejects multi-call, single-post carries")
+def c11():
+    r = LE.run_local(agent_name="multicall_reject", guardrail_name="optimal", budget_s=20, verbose=False)
+    assert r["score_raw"] > 0, "should still score via single-post"
+    assert "batch_exfil" not in r["telemetry"].get("confirmed_routes", {}), "batch must be dropped"
+    return f"raw={r['score_raw']:.0f} via {list(r['telemetry'].get('confirmed_routes',{}).keys())}"
+
+
+@check("generated destination domains never contain an ultra-dangerous substring")
+def c12():
+    import importlib.util
+    import random as _r
+
+    spec = importlib.util.spec_from_file_location("forge_attack", REPO / "attack.py")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    bad = ("secret", "password", "token", "key", "credential", "private", "confidential", "api_key")
+    rng = _r.Random(1)
+    for i in range(3000):
+        dom = mod._domain(rng, i).lower()
+        assert not any(b in dom for b in bad), f"dangerous substring in {dom}"
+    return "3000 domains, 0 ultra-dangerous substrings"
+
+
 @check("diversity: near one unique scoring cell per finding")
 def c10():
     r = LE.run_local(agent_name="compliant", guardrail_name="optimal", budget_s=30, verbose=False)
