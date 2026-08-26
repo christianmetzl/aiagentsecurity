@@ -1,0 +1,34 @@
+{
+  "experiment": "goexplore_budget_safety",
+  "baseline": "aicomp_sdk/attacks/baselines/attacker_goexplore.py::AttackAlgorithm",
+  "guard": "aicomp_sdk.evaluation.ops._run_until_deadline (ops.py:54-83, 780-786)",
+  "target_latency_s_per_hop": 1.5,
+  "generation_budget_s": 8.0,
+  "shipped_goexplore_baseline": {
+    "outcome": "timeout",
+    "elapsed_s": 8.01,
+    "returned_candidates": 0,
+    "zeroed": true,
+    "error": "attack generation exceeded its time budget"
+  },
+  "forge_submission": {
+    "outcome": "returned",
+    "elapsed_s": 3.02,
+    "returned_candidates": 1,
+    "zeroed": false
+  },
+  "archive_memory": {
+    "measured": true,
+    "retained_snapshots": 150,
+    "rss_growth_kib": 264584,
+    "rss_growth_mib": 258.4,
+    "per_snapshot_kib": 1763.9,
+    "note": "archive holds one full env snapshot per novel cell and never evicts; the baseline's own source flags this (attacker_goexplore.py:26-28)"
+  },
+  "claim_budget_safety_confirmed": true,
+  "defects_measured": [
+    "deadline_overrun_zeroes_run (defect 1: baseline TimeoutError => whole run scores 0)",
+    "unbounded_archive_memory (defect 2: one full snapshot per cell, never evicted)"
+  ],
+  "note": "This experiment does not ship. attack.py is FORGE only. It measures budget-safety, the contribution FORGE adds over the shipped Go-Explore baseline; it does not claim a novel search algorithm."
+}
