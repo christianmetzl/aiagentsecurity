@@ -242,6 +242,27 @@ def test_reference_guardrail_closes_all_routes_without_false_positives():
     assert fp == 0, f"{fp}/{n} benign false positives"
 
 
+def test_explore_mode_discovers_firing_chains_and_is_budget_safe():
+    """The novel Go-Explore mode must grow a cell archive, discover firing multi-step
+    chains via snapshot/restore, return valid budget-safe candidates, and never crash
+    (falling back to FORGE if snapshot/restore is unavailable)."""
+    r = LE.run_local(agent_name="compliant", guardrail_name="rules",
+                     budget_s=20, attack_config={"mode": "explore"}, verbose=False)
+    assert r["telemetry"].get("mode") == "explore"
+    assert r["telemetry"].get("archive_cells", 0) > 10
+    assert r["findings"] > 0
+    assert r["replay_time_s"] < 20 and r["gen_time_s"] < 20
+
+
+def test_explore_mode_does_not_affect_default_forge_path():
+    """Selecting explore mode must not change the default (mode=forge) behaviour."""
+    a = LE.run_local(agent_name="compliant", guardrail_name="optimal",
+                     budget_s=15, attack_config={}, verbose=False)
+    b = LE.run_local(agent_name="compliant", guardrail_name="optimal",
+                     budget_s=15, attack_config={"mode": "forge"}, verbose=False)
+    assert a["score_raw"] == b["score_raw"]
+
+
 def test_deterministic_under_fixed_seed():
     a = LE.run_local(agent_name="compliant", guardrail_name="optimal",
                      budget_s=20, seed=123, verbose=False)
