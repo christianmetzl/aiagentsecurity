@@ -196,7 +196,14 @@ and *compliance-bound* (the target must keep posting across the multi-message ca
 the probe re-checks and falls back if not). And density-packing exploits the *intended*
 per-event scoring formula, not a guardrail bug — a legitimate strategy, but the
 "per-event, no-dedup, ÷200000" scoring is itself worth flagging to the organizers
-alongside the two guardrail bugs (§6).
+alongside the two guardrail bugs (§6). Finally, the dense candidate *count* is sized from a
+wall-clock cost measured during generation, so it assumes probe-time latency ≈ replay-time
+latency: FORGE's `dense_safety` margin (≈1.4×) tolerates up to a ~1.8× latency increase
+between the probe and replay before it would overrun, which holds on a stable, dedicated eval
+container but not under a severe load *spike* between the two phases (on a heavily
+CPU-contended host we measured the same-config score swing ~1.8× run-to-run). The failure
+direction of a *lighter*-than-measured replay is only under-filling (a lower score), never an
+overrun.
 
 ### 3.3 Budget safety, concretely
 
