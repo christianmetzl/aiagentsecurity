@@ -287,22 +287,24 @@ budget, else the run would be zeroed).
 
 | target (stand-in) | guardrail | wide fill (norm) | **dense (norm)** | posts/candidate | budget-safe |
 |---|---|---:|---:|---:|:--:|
-| compliant | OptimalGuardrail (public) | 44.9 | **688** (→1000 @60 s) | 128 | ✅ |
-| stubborn (refuses overt exfil) | OptimalGuardrail | ~45 | **~668** | 128 | ✅ |
-| compliant | guardrail_rules (strict proxy) | ~24 | ~24 (dense N/A) | 1 | ✅ |
-| slow target (~120 ms/hop) | OptimalGuardrail | 9.6 | **10.6** (no regression) | 128 | ✅ |
-| multi-call-rejecting | OptimalGuardrail | — | **~200** (density adapts down) | 32 | ✅ |
+| compliant | OptimalGuardrail (public) | 45.2 | **677.8** (→1000 @60 s) | 128 | ✅ |
+| stubborn (refuses overt exfil) | OptimalGuardrail | 45.2 | **677.8** | 128 | ✅ |
+| compliant | guardrail_rules (strict proxy) | 24.2 | 24.2 (dense N/A) | 1 | ✅ |
+| slow target (~120 ms/hop) | OptimalGuardrail | 9.6 | **9.6** (dense falls back → exact tie) | 1 | ✅ |
+| multi-call-rejecting | OptimalGuardrail | 12.0 | **203.4** (density adapts to 32) | 32 | ✅ |
 | never-complies | OptimalGuardrail | 0 | 0 (no crash) | 1 | ✅ |
 
-Readings: (1) on a fast target density-packing lifts the public-column normalized score
-from ~45 (wide) to **688 at 30 s, capping at 1000 by 60 s** — the dominant lever; (2) on the
-strict proxy the marker post is blocked, so dense correctly does **not** engage (posts/cand
-= 1) and FORGE falls back to the read-secret/tainted-share routes; (3) on a **slow** target
-the adaptive rule falls back and dense ties the wide fill (no regression); (4) a parser that
-rejects multi-call batches drops the density to single posts per message but still packs 32
-messages; (5) a fully-refusing target yields 0 with no crash. The absolute figures reflect a
-near-zero-latency stand-in; the real ceiling is target compliance and latency (§3.2), which
-we do not measure here.
+(`results/dense_ablation.json`, all rows budget-safe.) Readings: (1) on a fast target
+density-packing lifts the public-column normalized score **~15× — from 45.2 (wide) to 677.8
+at 30 s, capping at 1000 by 60 s** — the dominant lever; (2) on the strict proxy the marker
+post is blocked, so dense correctly does **not** engage (posts/cand = 1) and FORGE falls back
+to the read-secret/tainted-share routes; (3) on a **slow** target the adaptive
+measured-throughput rule determines dense does not win and stays wide (posts/cand = 1), an
+*exact tie* with the wide fill — the cleanest possible no-regression guarantee; (4) a parser
+that rejects multi-call batches drops the density to single posts per message but still packs
+32 messages (norm 12 → 203); (5) a fully-refusing target yields 0 with no crash. The absolute
+figures reflect a near-zero-latency stand-in; the real ceiling is target compliance and
+latency (§3.2), which we do not measure here.
 
 ## 5. What we do and do not claim
 

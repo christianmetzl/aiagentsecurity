@@ -1,0 +1,152 @@
+{
+  "experiment": "dense_ablation",
+  "note": "Mechanism numbers vs a compliant stand-in (near-zero latency); absolute lift is latency-bound. dense_on is the shipped default; dense_off is the wide one-event-per-candidate fill. All rows must be budget_safe.",
+  "budget_s": 30,
+  "all_budget_safe": true,
+  "rows": [
+    {
+      "target": "compliant",
+      "guardrail": "optimal",
+      "budget_s": 30,
+      "dense_on": {
+        "returned_candidates": 89,
+        "raw": 135564.0,
+        "norm": 677.8,
+        "posts_per_candidate": 128,
+        "gen_time_s": 0.59,
+        "replay_time_s": 17.824,
+        "budget_safe": true
+      },
+      "dense_off": {
+        "returned_candidates": 155,
+        "raw": 9042.0,
+        "norm": 45.2,
+        "posts_per_candidate": 1,
+        "gen_time_s": 0.541,
+        "replay_time_s": 13.148,
+        "budget_safe": true
+      },
+      "raw_multiplier": 14.99
+    },
+    {
+      "target": "stubborn",
+      "guardrail": "optimal",
+      "budget_s": 30,
+      "dense_on": {
+        "returned_candidates": 89,
+        "raw": 135564.0,
+        "norm": 677.8,
+        "posts_per_candidate": 128,
+        "gen_time_s": 0.586,
+        "replay_time_s": 18.224,
+        "budget_safe": true
+      },
+      "dense_off": {
+        "returned_candidates": 155,
+        "raw": 9042.0,
+        "norm": 45.2,
+        "posts_per_candidate": 1,
+        "gen_time_s": 0.619,
+        "replay_time_s": 14.035,
+        "budget_safe": true
+      },
+      "raw_multiplier": 14.99
+    },
+    {
+      "target": "multicall_reject",
+      "guardrail": "optimal",
+      "budget_s": 30,
+      "dense_on": {
+        "returned_candidates": 106,
+        "raw": 40672.0,
+        "norm": 203.4,
+        "posts_per_candidate": 32,
+        "gen_time_s": 0.679,
+        "replay_time_s": 10.646,
+        "budget_safe": true
+      },
+      "dense_off": {
+        "returned_candidates": 155,
+        "raw": 2406.0,
+        "norm": 12.0,
+        "posts_per_candidate": 1,
+        "gen_time_s": 0.689,
+        "replay_time_s": 13.441,
+        "budget_safe": true
+      },
+      "raw_multiplier": 16.9
+    },
+    {
+      "target": "slow",
+      "guardrail": "optimal",
+      "budget_s": 30,
+      "dense_on": {
+        "returned_candidates": 34,
+        "raw": 1920.0,
+        "norm": 9.6,
+        "posts_per_candidate": 1,
+        "gen_time_s": 14.941,
+        "replay_time_s": 18.04,
+        "budget_safe": true
+      },
+      "dense_off": {
+        "returned_candidates": 34,
+        "raw": 1920.0,
+        "norm": 9.6,
+        "posts_per_candidate": 1,
+        "gen_time_s": 11.035,
+        "replay_time_s": 17.996,
+        "budget_safe": true
+      },
+      "raw_multiplier": 1.0
+    },
+    {
+      "target": "null",
+      "guardrail": "optimal",
+      "budget_s": 30,
+      "dense_on": {
+        "returned_candidates": 56,
+        "raw": 0.0,
+        "norm": 0.0,
+        "posts_per_candidate": 1,
+        "gen_time_s": 0.818,
+        "replay_time_s": 4.65,
+        "budget_safe": true
+      },
+      "dense_off": {
+        "returned_candidates": 56,
+        "raw": 0.0,
+        "norm": 0.0,
+        "posts_per_candidate": 1,
+        "gen_time_s": 0.873,
+        "replay_time_s": 4.93,
+        "budget_safe": true
+      },
+      "raw_multiplier": null
+    },
+    {
+      "target": "compliant",
+      "guardrail": "rules",
+      "budget_s": 30,
+      "dense_on": {
+        "returned_candidates": 155,
+        "raw": 4850.0,
+        "norm": 24.2,
+        "posts_per_candidate": 1,
+        "gen_time_s": 0.475,
+        "replay_time_s": 13.884,
+        "budget_safe": true
+      },
+      "dense_off": {
+        "returned_candidates": 155,
+        "raw": 4850.0,
+        "norm": 24.2,
+        "posts_per_candidate": 1,
+        "gen_time_s": 0.455,
+        "replay_time_s": 13.78,
+        "budget_safe": true
+      },
+      "raw_multiplier": 1.0
+    }
+  ]
+}

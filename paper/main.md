@@ -113,17 +113,17 @@ A single sentence carries the boundary: *every positive score in this paper is m
 
 ### 8.1 Mechanism validation (measured, stand-in target)
 
-Table 1 reports an offline density-packing ablation (dense vs. wide fill) at a 30-second budget against near-zero-latency stand-ins, so these show the density-packing *ceiling*, not leaderboard estimates (the real lift is latency-bound, §9). Every row is budget-safe (replay < budget, else the run is zeroed). They show: density-packing lifts the public-column normalized score from ~45 (wide) to 688 at 30 s and to the 1000 cap by 60 s; on the strict baseline the marker post is blocked so dense correctly does *not* engage and FORGE falls back to the read-secret/untrusted-to-action routes; on a slow target the adaptive rule falls back and dense ties the wide fill (no regression); a parser that rejects multi-call batches drops density to one post per message; and both a fully refusing target and the SDK's own deterministic agent yield zero without crashing.
+Table 1 reports an offline density-packing ablation (dense vs. wide fill) at a 30-second budget against near-zero-latency stand-ins, so these show the density-packing *ceiling*, not leaderboard estimates (the real lift is latency-bound, §9). Every row is budget-safe (replay < budget, else the run is zeroed). They show: density-packing lifts the public-column normalized score ~15× from 45.2 (wide) to 677.8 at 30 s and to the 1000 cap by 60 s; on the strict baseline the marker post is blocked so dense correctly does *not* engage and FORGE falls back to the read-secret/untrusted-to-action routes; on a slow target the adaptive measured-throughput rule keeps the wide fill (an exact tie — no regression); a parser that rejects multi-call batches drops density to one post per message (norm 12 → 203); and both a fully refusing target and the SDK's own deterministic agent yield zero without crashing.
 
 **Table 1 — Density-packing ablation (deterministic stand-in targets, 30 s budget).** *Not real-model scores; they show the mechanism's ceiling on a fast target and its adaptive fallback, budget safety, and graceful degradation. `results/dense_ablation.json`; `verify.py` check 1.*
 
 | Target (stand-in) | Guardrail | wide (norm) | **dense (norm)** | posts/cand | budget-safe |
 |---|---|---:|---:|---:|:--:|
-| compliant | public (permissive) | 44.9 | **688** (→1000 @60 s) | 128 | ✅ |
-| stubborn (refuses overt exfil) | public | ~45 | **~668** | 128 | ✅ |
-| compliant | strict baseline | ~24 | ~24 (dense N/A) | 1 | ✅ |
-| slow target (~120 ms/hop) | public | 9.6 | **10.6** (no regression) | 128 | ✅ |
-| multi-call-rejecting | public | — | **~200** | 32 | ✅ |
+| compliant | public (permissive) | 45.2 | **677.8** (→1000 @60 s) | 128 | ✅ |
+| stubborn (refuses overt exfil) | public | 45.2 | **677.8** | 128 | ✅ |
+| compliant | strict baseline | 24.2 | 24.2 (dense N/A) | 1 | ✅ |
+| slow target (~120 ms/hop) | public | 9.6 | **9.6** (dense falls back → exact tie) | 1 | ✅ |
+| multi-call-rejecting | public | 12.0 | **203.4** (density adapts to 32) | 32 | ✅ |
 | never-complies | public | 0 | 0 (no crash) | 1 | ✅ |
 
 ### 8.2 Real-model, leaderboard results (inferred; to be reported as measured)
