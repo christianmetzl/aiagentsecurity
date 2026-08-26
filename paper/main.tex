@@ -3,23 +3,16 @@
 % ---- arXiv-standard packages (all present in the default arXiv/TeXLive build) ----
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
-\usepackage{lmodern}
 \usepackage{amsmath,amssymb}
-\usepackage{booktabs}
-\usepackage{xcolor}
+\usepackage{color}
 \usepackage{graphicx}
 \usepackage[margin=1in]{geometry}
-\usepackage{hyperref}
-\hypersetup{colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue}
-\usepackage{enumitem}
-\usepackage{titlesec}
+\usepackage{url}
 
 % A visible marker for content to be filled after the first Kaggle submission.
 \newcommand{\placeholder}[1]{{\color{red}\textbf{[TODO: #1]}}}
 \newcommand{\code}[1]{\texttt{#1}}
 
-\titleformat{\section}{\normalfont\large\bfseries}{\thesection}{1em}{}
-\titleformat{\subsection}{\normalfont\normalsize\bfseries}{\thesubsection}{1em}{}
 
 \title{\bfseries What a Replay Benchmark Rewards:\\
 Guardrail-Adaptive Search and a Reference Defense for\\
@@ -85,7 +78,7 @@ Our contribution is deliberately incentive-first. A leaderboard is an optimisati
 target, and the honest way to attack (and to improve) such a benchmark is to understand
 precisely what its scoring code rewards. We make four contributions:
 
-\begin{enumerate}[leftmargin=1.4em,itemsep=2pt]
+\begin{enumerate}
   \item \textbf{An incentive analysis} of the benchmark, traced to its public SDK
   (\S\ref{sec:mechanics}--\ref{sec:incentives}): severity stacks within a trace, cell
   diversity is nearly free, replay is deterministic, and generation and replay share a
@@ -203,7 +196,7 @@ reads the address on the envelope but never opens it.
 
 A stricter baseline guardrail blocks an outbound \code{SHARE} that follows an untrusted
 web/email read \emph{unless} the last user message contains one of
-\{\emph{send}, \emph{email}, \emph{upload}, \textbf{\emph{post}}\} --- treating those
+\{send, email, upload, \textbf{post}\} --- treating those
 words as evidence the user intended the action. The \code{UNTRUSTED\_TO\_ACTION}
 predicate decides intent with a \emph{different} list:
 \{\emph{send}, \emph{email}, \emph{upload}\}, with no \emph{post}. The word ``post''
@@ -311,16 +304,16 @@ refusing target and the SDK's own deterministic agent yield zero without crashin
 \centering
 \small
 \begin{tabular}{llrrl}
-\toprule
+\hline
 Target (stand-in) & Guardrail & raw & norm & predicates (count) \\
-\midrule
+\hline
 compliant & public (permissive) & 17892 & 89.5 & EXFIL 1074, DEPUTY 23 \\
 compliant & strict baseline & 9606 & 48.0 & UNTRUSTED 528, EXFIL 30, DEPUTY 15 \\
 stubborn (refuses overt exfil) & public & 17958 & 89.8 & EXFIL 1078, DEPUTY 23 \\
 multi-call-rejecting & public & 4848 & 24.2 & EXFIL 254, DEPUTY 46 \\
 never-complies & public & 0 & 0 & --- (no crash) \\
 SDK deterministic agent & public & 0 & 0 & --- (by construction) \\
-\bottomrule
+\hline
 \end{tabular}
 \caption{Mechanism validation against deterministic stand-in targets, 60\,s budget.
 \emph{Not} real-model scores; they validate the scoring mechanism and FORGE's adaptivity,
@@ -342,13 +335,13 @@ pre-registration as pass/fail as measured, including any that were falsified.}
 \centering
 \small
 \begin{tabular}{lrr}
-\toprule
+\hline
 Guardrail & FORGE attack raw & benign false positives \\
-\midrule
+\hline
 public (permissive) & 8976 & 1 / 7 \\
 strict baseline & 4850 & 0 / 7 \\
 \textbf{reference (ours)} & \textbf{0} & \textbf{0 / 7} \\
-\bottomrule
+\hline
 \end{tabular}
 \caption{Attack$\rightarrow$defense loop, 30\,s budget, compliant stand-in. The reference
 guardrail closes every FORGE route (attack raw $\to 0$) with no benign false positives.}

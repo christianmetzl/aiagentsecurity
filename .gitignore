@@ -5,3 +5,8 @@ __pycache__/
 results/*.local
 scratch/
 *.egg-info/
+
+# LaTeX build artifacts (keep main.pdf/main.docx as deliverables)
+paper/*.aux
+paper/*.log
+paper/*.out

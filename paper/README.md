@@ -1,9 +1,24 @@
 # Preprint — build & submission notes
 
-`main.tex` is a self-contained, arXiv-standard LaTeX source (single file, embedded
-bibliography — no BibTeX step needed). It was **not** compiled in the build environment
-that produced it (no TeX toolchain there); it validates structurally (balanced
-environments/braces, all citations resolved) and builds with a standard TeX Live install.
+`main.tex` is a self-contained LaTeX source (single file, embedded bibliography — no
+BibTeX step needed). It compiles cleanly to an 8-page `main.pdf` with `pdflatex` (built
+here; see the portability note below), and also builds on Overleaf/arXiv.
+
+
+## Built outputs (in this directory)
+
+- `main.pdf` — 8-page compiled PDF (built here with pdflatex).
+- `main.docx` — Word version (built by `build_docx.py` from `main.md`).
+- `main.md` — readable Markdown rendering.
+- `main.tex` — the LaTeX source of record.
+
+Rebuild: `make` (PDF) · `python build_docx.py` (DOCX).
+
+**Portability note.** To compile in a minimal TeX environment, `main.tex` uses base
+packages only — `url` instead of `hyperref` (so URLs render as plain text, not
+clickable links) and plain `\hline` tables instead of `booktabs`. On arXiv/Overleaf you
+may re-enable `hyperref` + `booktabs` for clickable links and finer table rules; the
+content is identical.
 
 ## Build
 

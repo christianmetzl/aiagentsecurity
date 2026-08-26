@@ -109,4 +109,14 @@ class Guardrail(GuardrailBase):
             if ("run" not in last_user) and ("execute" not in last_user):
                 return Decision.deny("shell execution after untrusted content")
 
+        # Untrusted content -> destructive/local WRITE (fs.write/fs.delete) that the
+        # user did not ask for is a laundered action. Mirror guardrail_rules so the
+        # scorer's UNTRUSTED_TO_ACTION(WRITE, sev 4) route is closed too.
+        if (
+            (context.get("side_effect") == "WRITE" or tool_name in ("fs.write", "fs.delete"))
+            and tainted_untrusted
+            and not any(k in last_user for k in ("write", "save", "store"))
+        ):
+            return Decision.deny("write/delete after untrusted content without user intent")
+
         return Decision.allow("ok")
