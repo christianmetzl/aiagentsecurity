@@ -1,7 +1,7 @@
 # What a Replay Benchmark Rewards: Guardrail-Adaptive Search and a Reference Defense for Multi-Step Tool Attacks on AI Agents
 
 **Christian Metzl**
-*[TODO: affiliation]* · *[TODO: contact email]*
+Independent Researcher · *[TODO: contact email]*
 
 *Preprint. Markdown rendering of `main.tex` — the LaTeX source is the version of record for arXiv.*
 

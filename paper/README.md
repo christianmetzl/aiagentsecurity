@@ -31,7 +31,8 @@ pdflatex main.tex && pdflatex main.tex
 
 ## Before posting — fill these placeholders (they are marked \placeholder{...} in red)
 
-1. **Affiliation** and **contact email** on the title page.
+1. **Contact email** on the title page (affiliation set to "Independent Researcher"). A preprint
+   normally lists a contact email; use one you're comfortable publishing, or omit the line.
 2. **§7.2 Real-model results** — the core empirical table: the four normalized
    leaderboard scores (`gpt_oss_public`, `gpt_oss_private`, `gemma_public`,
    `gemma_private`), the per-route firing rates actually observed on GPT-OSS-20B /
