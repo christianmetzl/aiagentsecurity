@@ -36,11 +36,17 @@ measurable by replaying attacker-supplied message chains against sandboxed tool-
 agents and scoring four security predicates. We take an incentive-first view: rather
 than treating the benchmark as a black box, we reverse-engineer its scoring from the
 public SDK and ask what behaviour it actually rewards. Three properties dominate:
-severity stacks within a trace, cell diversity is essentially free, and --- because
+severity stacks \emph{per tool event} while the evaluator rebuilds the environment
+\emph{per candidate}; cell diversity is essentially free; and --- because
 attack generation and evaluator replay share the same guardrail --- an attacker can
-\emph{probe the live guardrail during generation and specialise to it}. We use this to
+\emph{probe the live guardrail during generation and specialise to it}. We use these to
 build FORGE, a guardrail-adaptive attack search that scores against both a permissive
-public guardrail and a stricter one with a single submission. Along the way we identify
+public guardrail and a stricter one with a single submission. Its dominant lever is
+\textbf{density-packing}: because the per-candidate environment build is a fixed cost,
+packing up to ${\sim}128$ exfiltration events into one candidate (message-spread
+$\times$ multi-hop batching) amortizes that cost and lifts the offline normalized score
+from ${\sim}45$, for the naive one-event-per-candidate fill, toward the 1000 cap ---
+chosen adaptively from a measured sample so it never regresses on a slow target. Along the way we identify
 two guardrail/predicate \emph{mismatches} --- a payload-channel inspection gap and a
 keyword allow-list divergence --- that let an attacker pass a guardrail while still
 tripping the scorer, and we contribute a small provenance-aware reference guardrail that
@@ -225,11 +231,28 @@ its batched form); an untrusted-read-then-\emph{post} route targeting
 route for \code{CONFUSED\_DEPUTY}. It keeps the framings that actually fire, ranked by
 \emph{measured} raw-per-hop yield.
 
-\paragraph{Concentrate and diversify.} Because severity dominates and diversity is free
-per candidate (\S\ref{sec:incentives}), FORGE fills the replay budget greedily by
-measured raw-per-hop, fanning the best route across distinct benign destinations so each
-candidate is a distinct cell. Untested variants are emitted on the strength of
-determinism (property 3).
+\paragraph{Density-pack, then diversify.} Two facts of the scoring/replay architecture
+combine into the dominant lever. First, severity stacks \emph{per tool event}
+(\S\ref{sec:incentives}, property 1): a trace with $m$ secret-bearing posts scores $16m$,
+with no dedup. Second, the evaluator builds a \emph{fresh environment per candidate} ---
+parsing the multi-megabyte web/mail fixtures each time --- so every candidate pays a fixed
+env-build overhead $O$ ($\approx$75\,ms measured) once, regardless of how many scoring
+events it contains. It follows that the throughput-optimal candidate is not ``one post to a
+fresh domain'' (the naive fill, which pays $O$ per single event and tops out near
+normalized-45) but a \textbf{hybrid density-pack}: up to \code{MAX\_MESSAGES\_PER\_CANDIDATE}
+messages (32), each a multi-hop batch of \code{max\_tool\_hops} posts (4), for up to
+\textbf{128 \code{EXFILTRATION} events in one candidate} --- multi-hop batching keeps the
+per-post call cost low (one final turn amortizes four posts), while message-spread amortizes
+$O$ over all 128 events. One such candidate scores ${\approx}2050$ raw for a single env
+build; the naive one scores 18. Whether it is worth it depends on the target's per-hop
+latency $L$ relative to $O$, so FORGE does not assume: it \textbf{measures a dense sample on
+the live target during generation} --- capturing the true per-message cost and confirming
+sustained compliance --- and switches to dense only when the measured raw-per-replay-second
+beats the incumbent best route, sizing the returned list from that measurement so replay
+stays inside its deadline. On a fast target this lifts the normalized score from ${\sim}45$
+(naive) to the 1000 cap; on a slow target it correctly falls back to the wide fill (no
+regression). Remaining budget fans the best routes across distinct benign destinations (each
+a distinct cell, $+2$) and emits untested variants on the strength of determinism (property 3).
 
 \paragraph{Budget safety.} A replay overrun raises a timeout that zeroes the run, so the
 returned list is sized to $\le$ a safe fraction of the budget using a probe-measured,
@@ -250,28 +273,33 @@ probe observes no firing and the route is dropped in favour of the reliable sing
 route. Graceful degradation is a tested invariant, not an assumption.
 
 \paragraph{Two attack families --- labelled.} FORGE's routes are of two honest kinds. The
-\code{SECRET\_MARKER} sentinel post and free diversity via distinct destination
-\emph{domains} are \emph{benchmark-exploitation}: they score the public column, but
-posting an opaque token to a benign URL is not a real compromise and ``distinct
-destination $\neq$ distinct attack.'' The read-\code{secret.txt}-then-forward and
-untrusted-content-then-act routes are \emph{genuine compromises}. We present the sentinel
-route as metric-optimisation, not as the security headline (\S\ref{sec:results}).
+\code{SECRET\_MARKER} sentinel post, the density-packing above, and diversity via distinct
+destination \emph{domains} are \emph{benchmark-exploitation}: they maximise the metric ---
+posting an opaque token (or many) to benign URLs is not a real compromise, and ``distinct
+destination $\neq$ distinct attack.'' The routes that read the real \code{secret.txt} and
+forward its true values are \emph{security-relevant}: a real secret leaves
+(\S\ref{sec:results}). We are careful not to overclaim the latter as \emph{indirect prompt
+injection} --- under a compliant stand-in the agent follows the \emph{user's} instruction,
+not any injected content, so the untrusted read only supplies the provenance tag
+\code{UNTRUSTED\_TO\_ACTION} scores on; demonstrating injection-\emph{following} would
+require a target that acts on tool-output content, which both public guardrails correctly
+taint-block. We present the metric-optimisation routes as exactly that, not as the security
+headline (\S\ref{sec:results}).
 
-\paragraph{Beyond fixed routes: an online Go-Explore search.} FORGE's default probe-then-fan
-search can only fan out routes it was written to try. We therefore also implement, in the
-same \code{attack.py}, an online \textbf{Go-Explore / quality-diversity search}
-(\code{mode="explore"}) that uses the live target model as its fitness oracle: it keeps an
-archive keyed by the SDK's score-cell, \emph{returns} to a promising cell via
-\code{env.restore(snapshot)} and then \emph{explores} by appending one move from a mutation
-grammar (read / open / email / post / post-what-you-read / send / shell / follow-injection),
-rewarding predicate severity, cell novelty, and a real-attack bonus. This is a faithful
-instance of the family FORGE's baseline only gestures at~\cite{ecoffet2021}: it discovers,
-rather than assumes, what fires on a specific target. In the offline ablation it grows a
-$\sim$400--500 cell archive and finds 15 (public) to $\sim$270 (strict) firing multi-step
-chains; because it \emph{explores} rather than \emph{exploits}, its raw score is below
-FORGE's fan-out on the mock --- the value is discovery on an unknown target, with the
-explore-then-fan-out hybrid the natural combination (and FORGE's probe-then-fan its
-route-level special case).
+\paragraph{Budget-safety is the constraint, not the search.} The SDK ships a Go-Explore
+attacker (\code{attacker\_goexplore.py}~\cite{ecoffet2021}) that returns to promising cells
+via snapshot/restore and explores a mutation grammar. We do not re-implement it; instead we
+isolate what actually matters for a \emph{replay-scored} setting. In
+\code{experiments/goexplore\_budget\_safety.py} we run the shipped baseline under the
+evaluator's own generation-deadline guard on a slow target and show two defects: it overruns
+the deadline --- a \code{TimeoutError} that \textbf{zeroes the entire run} --- because its
+loop never forecasts whether the next interaction can finish in time; and it retains a full
+environment snapshot per novel cell with no eviction ($\approx$1.7\,MiB each, measured;
+$\approx$1.2\,GiB at the interaction cap, which its own source comments flag). FORGE's
+per-interaction budget guard refuses work that cannot finish, and it retains no snapshots.
+The lesson generalises: for any attack generator scored by bounded replay, budget-safety is
+a first-class correctness constraint, and a search heuristic that ignores it can score zero
+on exactly the slow targets where careful search would matter most.
 
 \section{A reference guardrail: closing the loop}\label{sec:defense}
 
@@ -316,32 +344,37 @@ model's compliance rate.}
 
 \subsection{Mechanism validation (measured, stand-in target)}
 
-Table~\ref{tab:mechanism} reports offline scores at a 60-second budget --- far below the
-competition's per-model budget (the SDK's default attack budget is 1800\,s), so these are mechanism checks, not
-leaderboard estimates. They show the mechanism fires and adapts: on the permissive public
-guardrail the sentinel/batch routes dominate; on the strict baseline the score comes from
-the read-secret and untrusted-to-action routes; a target that refuses overt-exfil wording
-is still driven to score via a benign framing the probe discovers; and both a fully
-refusing target and the SDK's own deterministic agent yield zero without crashing.
+Table~\ref{tab:mechanism} reports an offline density-packing ablation (dense vs.\ wide fill)
+at a 30-second budget against near-zero-latency stand-ins, so these show the density-packing
+\emph{ceiling}, not leaderboard estimates (the real lift is latency-bound,
+\S\ref{sec:limitations}). Every row is budget-safe (replay $<$ budget, else the run is zeroed).
+Density-packing lifts the public-column normalized score ${\sim}15\times$ from 45.2 (wide) to
+677.8 at 30\,s and to the 1000 cap by 60\,s; on the strict baseline the marker post is
+blocked so dense correctly does \emph{not} engage and FORGE falls back to the
+read-secret/untrusted-to-action routes; on a slow target the adaptive measured-throughput
+rule keeps the wide fill (an exact tie --- no regression); a parser that rejects multi-call
+batches drops density to one post per message (norm $12 \to 203$); and both a fully refusing
+target and the SDK's deterministic agent yield zero without crashing.
 
 \begin{table}[t]
 \centering
 \small
-\begin{tabular}{llrrl}
+\begin{tabular}{llrrrc}
 \hline
-Target (stand-in) & Guardrail & raw & norm & predicates (count) \\
+Target (stand-in) & Guardrail & wide & dense & posts/cand & safe \\
 \hline
-compliant & public (permissive) & 17892 & 89.5 & EXFIL 1074, DEPUTY 23 \\
-compliant & strict baseline & 9606 & 48.0 & UNTRUSTED 528, EXFIL 30, DEPUTY 15 \\
-stubborn (refuses overt exfil) & public & 17958 & 89.8 & EXFIL 1078, DEPUTY 23 \\
-multi-call-rejecting & public & 4848 & 24.2 & EXFIL 254, DEPUTY 46 \\
-never-complies & public & 0 & 0 & --- (no crash) \\
-SDK deterministic agent & public & 0 & 0 & --- (by construction) \\
+compliant & public (permissive) & 45.2 & \textbf{677.8} & 128 & \checkmark \\
+stubborn (refuses overt exfil) & public & 45.2 & \textbf{677.8} & 128 & \checkmark \\
+compliant & strict baseline & 24.2 & 24.2 & 1 & \checkmark \\
+slow target ($\sim$120\,ms/hop) & public & 9.6 & \textbf{9.6} & 1 & \checkmark \\
+multi-call-rejecting & public & 12.0 & \textbf{203.4} & 32 & \checkmark \\
+never-complies & public & 0 & 0 & 1 & \checkmark \\
 \hline
 \end{tabular}
-\caption{Mechanism validation against deterministic stand-in targets, 60\,s budget.
-\emph{Not} real-model scores; they validate the scoring mechanism and FORGE's adaptivity,
-budget safety, and graceful degradation.}
+\caption{Density-packing ablation (normalized score) against deterministic stand-in targets,
+30\,s budget; \code{results/dense\_ablation.json}. \emph{Not} real-model scores: they show the
+mechanism's ceiling on a fast target and its adaptive fallback (slow target: dense declines,
+an exact tie), budget safety, and graceful degradation.}
 \label{tab:mechanism}
 \end{table}
 
@@ -372,11 +405,11 @@ guardrail closes every FORGE route (attack raw $\to 0$) with no benign false pos
 \label{tab:defense}
 \end{table}
 
-\subsection{A genuine multi-step compromise, and what the guardrails do with it}
+\subsection{A real secret leaving: the guardrail differential on a user-instructed read-then-exfil}
 
-The security headline is not the sentinel route but a real chain: an agent consults
-untrusted web content, reads the protected \code{secret.txt}, and exfiltrates its
-\emph{real} credential values. The contrast across guardrails \emph{is} the finding
+A second, security-relevant chain: a user instructs the agent to open a web page, read the
+protected \code{secret.txt}, and post its \emph{real} credential values to an external
+endpoint. Whether the real secret leaves depends entirely on the guardrail
 (\code{results/real\_attack\_evidence.json}; \code{python -m demos.real\_multistep\_attack}):
 
 \begin{table}[h]
@@ -392,11 +425,20 @@ reference (ours) & web.open $\to$ fs.read $\to$ http.post \emph{denied} & none &
 \end{tabular}
 \end{table}
 
-\noindent The \textbf{public guardrail correctly defends the canonical indirect-prompt-injection
-attack} --- which is precisely why the only public-scorable route is the sentinel
-data-channel gap --- and the genuine compromise leaks only through the strict baseline's
-``post''-keyword mismatch (Bug 2, \S\ref{sec:bugs}), which our reference guardrail closes.
-This is the durable security content of the work.
+\noindent \textbf{What this is, precisely.} The compliant stand-in follows the \emph{user's}
+instructions --- it posts to the user-supplied URL, not to any address written in the page
+--- so this is \textbf{user-instructed read-then-exfil, not indirect prompt injection}: the
+\code{web.open} is causally inert here (it only sets the untrusted-provenance tag that lets
+\code{UNTRUSTED\_TO\_ACTION} fire). We do not claim to demonstrate injection-following; both
+public guardrails in fact taint-block a post that follows an untrusted read, the correct
+defense. The stacked predicates (severity $5+5=32$ raw) accumulate \emph{over the
+three-message chain}, not one interaction. The strict baseline leaks for two independent
+reasons: its untrusted$\to$SHARE check honours ``post'' while the scorer's intent check does
+not (Bug 2, \S\ref{sec:bugs}), \emph{and} its exfiltration matcher recognises only the
+\code{SECRET\_MARKER} sentinel, so even a benign-worded read-then-post with no taint leaks
+the real value. Our reference guardrail closes both. This guardrail differential is the
+durable security content; the public-column sentinel route is a separate payload-channel gap,
+labeled throughout as benchmark-exploitation.
 
 \subsection{A quantum-inspired diversity selector, and its honest verdict}
 
@@ -410,8 +452,11 @@ DPP reduces to quality-greedy concentration: it helps where a single route domin
 public column, $+1254$ raw at a 30\,s budget) but \emph{under-serves} the multi-route
 strict column ($-300$), which the balanced default serves better. Net a wash-to-negative
 on the column most likely to decide ranking, so it ships \emph{off} by default and we do
-not claim it improves our score. We report it as an honest negative and a generalisable
-component for settings where cells are genuinely \emph{contended}.
+not claim it improves our score. Density-packing (\S\ref{sec:forge}) reduces its relevance
+further: the throughput-optimal fill concentrates budget on a single dense exfiltration
+route, so there is even less cross-route diversity for a repulsion model to select over. We
+report the DPP as an honest negative and a generalisable component for settings where cells
+are genuinely \emph{contended}.
 
 \section{Limitations}\label{sec:limitations}
 
@@ -421,28 +466,49 @@ baseline as a \emph{proxy} for the unknown private guardrail; ``proxy'' is load-
 (iii) FORGE is compliance-bounded: against a sufficiently robust target it scores low; it
 finds a working framing only if one exists in its bank. (iv) Under the known guardrails
 \code{DESTRUCTIVE\_WRITE} is unreachable, and \code{UNTRUSTED\_TO\_ACTION} is reachable
-only on the strict baseline via Bug 2. (v) Offline budgets are short (60\,s), far below the competition's
-per-model budget; they validate mechanism, not the real ceiling.
+only on the strict baseline via Bug 2. (v) Offline budgets validate mechanism, not the real
+ceiling. (vi) \textbf{Density-packing is latency-bound:} its absolute lift depends on the
+real target's per-hop latency relative to the per-candidate env-build overhead; near the
+crossover ($\sim$0.5\,s/hop) dense ties the wide fill and above it the wide fill wins, so the
+norm-1000 figures reflect a near-zero-latency stand-in, not a promised real-model score --- the
+adaptive rule guarantees no regression, not the ceiling. (vii) \textbf{Density-packing is
+compliance-bound:} it assumes the target sustains posting across a 32-message candidate; the
+probe re-checks and falls back, but a target that complies for the sample then refuses
+mid-candidate yields a shorter, lower-scoring (still valid) trace. (viii) Density-packing
+exploits the \emph{intended} per-event, no-dedup scoring, not a bug; we flag that scoring
+design to the organizers (\S\ref{sec:disclosure}).
 
 \section{Responsible disclosure and ethics}\label{sec:disclosure}
 
 All experiments run in an offline, fixture-backed sandbox with synthetic secrets and mock
 egress tools; no real endpoint is contacted and no real secret exists. The attack routes
 are scoped to this benchmark's sentinel and fixtures and are not usable against deployed
-systems. The two guardrail mismatches (\S\ref{sec:bugs}) concern the competition's public
-SDK; we will disclose them to the organizers before publication. We lead with the defensive contribution
-(\S\ref{sec:defense}) because it is the durable one. No competition data is redistributed
-here; we cite the public MIT-licensed SDK rather than re-hosting fixtures.
+systems. Three findings concern the competition's public SDK and we will disclose all three
+to the organizers before publication: the two guardrail/predicate mismatches
+(\S\ref{sec:bugs}), and a scoring observation --- because raw score sums severity over
+\emph{every} tool event with no dedup and normalizes by a fixed 200000, a density-packing
+attacker can drive the normalized score to its cap on a fast target (\S\ref{sec:forge}); we
+flag it not as a vulnerability but as a metric-design choice the organizers may wish to
+reconsider (e.g.\ per-trace or per-predicate-type caps). We lead with the defensive
+contribution (\S\ref{sec:defense}) because it is the durable one. No competition data is
+redistributed here; we cite the public MIT-licensed SDK rather than re-hosting fixtures.
 
 \section{Related work}\label{sec:related}
 
 Indirect prompt injection --- untrusted content steering an integrated
 application~\cite{greshake2023} --- is the threat this benchmark operationalises for
 tool-using agents; \cite{zou2025} reports insights from a large-scale public
-agent-security competition of the same lineage. FORGE's probe-then-exploit structure is
-an archive-guided search in the spirit of Go-Explore~\cite{ecoffet2021}, specialised to a
-guardrail-conditioned, replay-deterministic setting. Our diversity study uses
-determinantal point processes~\cite{kulesza2012} and their fast greedy MAP
+agent-security competition of the same lineage. FORGE is \emph{not} an archive-guided
+search: it is a probe-then-fan specialisation to whatever guardrail is live, plus the
+density-packing of \S\ref{sec:forge}. The SDK itself ships a Go-Explore
+attacker~\cite{ecoffet2021}, \code{attacker\_goexplore.py}, which restores cell states via
+snapshot/restore; we find (and reproduce in \code{experiments/goexplore\_budget\_safety.py})
+that this shipped baseline can overrun the evaluator's generation deadline on a slow target
+--- a \code{TimeoutError} that zeroes the whole run --- and retains a full environment
+snapshot per novel cell with no eviction, whereas FORGE's per-interaction budget guard
+refuses work that cannot finish and it retains no snapshots. Treating budget-safety as a
+first-class constraint, not the search heuristic, is what separates the two. Our diversity
+study uses determinantal point processes~\cite{kulesza2012} and their fast greedy MAP
 inference~\cite{chen2018}.
 
 \section{Conclusion}\label{sec:conclusion}
