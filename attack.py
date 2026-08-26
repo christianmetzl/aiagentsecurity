@@ -596,13 +596,14 @@ def _routes(cfg: _Config, rng: random.Random, max_hops: int) -> list[_Route]:
     if cfg.enable_destructive_write:
         routes.append({
             "name": "destructive_write", "est_hops": 2, "est_msgs": 1, "insurance": False,
+            "framings": 1,
             "build": lambda f, i: _destructive_write_messages(f, i),
         })
     if cfg.enable_laundered_share:
         page_ids = ("page_2", "page_4", "page_5", "page_8")
         routes.append({
             "name": "laundered_share", "est_hops": cfg.launder_pad + 2,
-            "est_msgs": cfg.launder_pad + 2, "insurance": False,
+            "est_msgs": cfg.launder_pad + 2, "insurance": False, "framings": 1,
             "build": lambda f, i: _laundered_share_messages(
                 f, page_ids[i % len(page_ids)], _url(rng, i, "ingest"), cfg.launder_pad),
         })
@@ -794,7 +795,10 @@ class AttackAlgorithm(AttackAlgorithmBase):
                     or not probe_fits(route)):
                 break
             name = route["name"]
-            for framing in range(cfg.framings_per_route):
+            # Per-route framing cap: routes that either fire or don't (they are not
+            # framing-sensitive) probe once, to keep probe wall-clock small and stable.
+            n_framings = int(route.get("framings", cfg.framings_per_route))
+            for framing in range(n_framings):
                 if (gen_box.expired() or probe_interactions >= cfg.max_probe_interactions
                         or not probe_fits(route)):
                     break
