@@ -337,8 +337,21 @@ hold, which the engine's concessions map exactly: **keep the secret unreadable b
 channel; set the taint window ≥ the predicate window (2 events); and protect the secret from
 destructive writes.** This is the honest "most-harmful realistic attack": it maxes real harm
 against a weak or unknown guardrail and stealthily, and it tells you precisely what a guardrail
-must do to stop it. FORGE carries a bounded genuine route as leaderboard insurance for exactly
-the case where the private guardrail is one of the weak ones.
+must do to stop it.
+
+**Folded into FORGE as live insurance.** The two genuine routes the standalone engine relies on
+— `destructive_write` (destroy `secret.txt`) and `laundered_share` (untrusted read → benign pad
+→ action, defeating a short taint window) — now ship as probe-confirmed routes in FORGE's own
+route bank. Because generation and replay share the guardrail, FORGE probes them against
+whatever guardrail is live: on the strong known guardrails they fire nothing and are emitted as
+*no* insurance candidates (they are probe-confirm-only, since a route that fails the probe fails
+replay identically — so they add zero cost and there is no score regression, verified), while on
+a weak *private* guardrail the probe confirms them and Phase 3 fans them out as genuine scoring
+routes automatically (measured: `destructive_write` fires DESTRUCTIVE_WRITE on an
+unprotected-write guardrail; `laundered_share` fires UNTRUSTED_TO_ACTION on a taint-window-1
+guardrail; both budget-safe). So the realistic attack is not a separate mode — it is live,
+adaptive leaderboard insurance that costs nothing unless the private guardrail is one of the
+weak ones.
 
 ### 3.5 Budget-safety is the constraint, not the search
 

@@ -180,6 +180,32 @@ def test_generated_domains_have_no_ultra_dangerous_substring():
         assert not any(b in dom for b in bad), f"dangerous substring in {dom}"
 
 
+def test_genuine_insurance_routes_activate_on_weak_guardrails_without_regression():
+    """FORGE's genuine insurance routes (destructive_write, laundered_share) are probe-confirm
+    only: they must add NO score on the strong known guardrail (no regression vs disabled),
+    and AUTO-ACTIVATE as genuine scoring routes where a weak/private guardrail leaves the hole
+    open — destruction where writes are unprotected, untrusted->action where the taint window
+    is too short — all while staying budget-safe."""
+    # no regression on the strong public guardrail (within one dense candidate)
+    on = LE.run_local(agent_name="compliant", guardrail_name="optimal", budget_s=20, seed=123, verbose=False)
+    off = LE.run_local(agent_name="compliant", guardrail_name="optimal", budget_s=20, seed=123,
+                       attack_config={"enable_destructive_write": False, "enable_laundered_share": False},
+                       verbose=False)
+    ppc = int(on["telemetry"].get("dense_posts_per_candidate", 1) or 1)
+    assert on["score_raw"] >= off["score_raw"] - (16 * ppc + 4), (on["score_raw"], off["score_raw"])
+    assert on["replay_time_s"] < 20
+
+    # auto-activation: destructive_write on an unprotected-write guardrail
+    w = LE.run_local(agent_name="compliant", guardrail_name="no_write_protect", budget_s=15, seed=123, verbose=False)
+    assert "destructive_write" in w["telemetry"].get("confirmed_routes", {})
+    assert w["predicate_counts"].get("DESTRUCTIVE_WRITE", 0) > 0 and w["replay_time_s"] < 15
+
+    # auto-activation: laundered_share on a short-taint-window guardrail
+    s = LE.run_local(agent_name="compliant", guardrail_name="short_taint", budget_s=15, seed=123, verbose=False)
+    assert "laundered_share" in s["telemetry"].get("confirmed_routes", {})
+    assert s["predicate_counts"].get("UNTRUSTED_TO_ACTION", 0) > 0 and s["replay_time_s"] < 15
+
+
 def test_dpp_off_by_default_takes_the_same_path_as_explicit_off():
     """The optional DPP selector must be OFF by default, so the shipped default path is the
     proven greedy fill (use_dpp=False). We assert the invariant that actually matters -- the

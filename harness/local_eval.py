@@ -75,6 +75,19 @@ def _guardrail_factory(name: str):
         mod = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(mod)
         return mod.Guardrail
+    # Plausible unknown/private-guardrail variants (harness/guardrail_variants.py), used to
+    # verify FORGE's genuine insurance routes auto-activate where the private guardrail is weak.
+    variant_names = {
+        "short_taint": "ShortTaintGuardrail", "readable_secret": "ReadableSecretGuardrail",
+        "no_write_protect": "NoWriteProtectGuardrail", "no_exec": "NoExecGuardrail",
+        "optimal_like": "OptimalLike", "allow": "PermissiveGuardrail",
+    }
+    if name in variant_names:
+        from harness import guardrail_variants as GV
+        if name == "allow":
+            from aicomp_sdk.attacks.baselines.guardrail_allow import Guardrail as _Allow
+            return _Allow
+        return getattr(GV, variant_names[name])
     raise ValueError(f"unknown guardrail: {name}")
 
 
