@@ -166,7 +166,7 @@ diversity tail from the other confirmed routes.
 
 Replay cost per candidate is modelled as `est_hops · per-hop-latency + fixed_overhead`,
 with per-hop latency measured from the probe interactions and a fixed overhead for the
-per-candidate fresh-env construction. FORGE fills only up to `replay_safety` (0.5) of
+per-candidate fresh-env construction. FORGE fills only up to `replay_safety` (0.78) of
 the budget, with `est_hops` deliberately over-estimated (the safe direction). Generation
 itself returns at 80 % of its own deadline. In the offline harness this holds across
 target latencies and budgets (`verify.py` check 6; §4).
@@ -326,9 +326,9 @@ lessons in §6 are the point. All code is MIT-licensed and reproducible offline.
 
 ```
 pip install -r requirements-dev.txt          # aicomp_sdk + gymnasium + pydantic + pytest
-python verify.py                              # 10/10 assertions, offline, no GPU
+python verify.py                              # 13/13 assertions, offline, no GPU
 python -m harness.local_eval --agent compliant --guardrail optimal --budget 60
-python -m pytest -q                           # 12 tests
+python -m pytest -q                           # 17 tests
 python scripts/build_notebook.py              # regenerate the Kaggle submission notebook
 ```
 

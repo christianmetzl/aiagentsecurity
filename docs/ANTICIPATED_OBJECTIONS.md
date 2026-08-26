@@ -43,7 +43,7 @@ This is the failure we engineered against. FORGE sizes the returned list to
 count, and only fills that budget. It holds across target latencies in the harness
 (`verify.py` 6; `test_replay_never_overruns_budget`). Residual risk: if the *real*
 per-hop replay latency materially exceeds what generation measured (e.g. much longer
-contexts on replay), the estimate could be optimistic; `replay_safety = 0.5` plus the
+contexts on replay), the estimate could be optimistic; `replay_safety = 0.78` plus the
 hop over-estimate is the margin, and the knob is exposed for tuning.
 
 **O5. "`guardrail_rules` is not the private guardrail; your strict-guardrail results are
@@ -114,9 +114,11 @@ name.
 2. **Private guardrail unknown.** Strict-guardrail results use a proxy (O5).
 3. **Compliance-bounded.** Against a sufficiently robust target the score is low; FORGE
    finds a working framing only if one exists in its bank (O3).
-4. **Two predicates unreachable under known guardrails.** `DESTRUCTIVE_WRITE` and
-   `UNTRUSTED_TO_ACTION` do not score under `OptimalGuardrail`/`guardrail_rules`; we
-   report this as a negative rather than pretend otherwise.
+4. **Predicate reachability under known guardrails.** `DESTRUCTIVE_WRITE` is unreachable
+   under both known guardrails, and `UNTRUSTED_TO_ACTION` is unreachable under
+   `OptimalGuardrail` (taint blocks the follow-on action). `UNTRUSTED_TO_ACTION` *is*
+   reachable under `guardrail_rules` via the "post"-keyword mismatch (the `tainted_share`
+   route); we report both the negative (`DESTRUCTIVE_WRITE`) and this positive as measured.
 5. **Budget estimate assumes representative probe latency.** A large generation↔replay
    latency gap could make the size estimate optimistic; mitigated by margins (O4).
 6. **Offline harness runs are short** (60 s), 5 orders of magnitude below the real
