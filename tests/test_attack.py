@@ -169,6 +169,35 @@ def test_generated_domains_have_no_ultra_dangerous_substring():
         assert not any(b in dom for b in bad), f"dangerous substring in {dom}"
 
 
+def test_dpp_off_by_default_matches_explicit_off():
+    """The optional DPP selector must be OFF by default and identical to use_dpp=False,
+    so the shipped default path is exactly the proven greedy fill."""
+    fixtures = LE.resolve_fixtures_dir(None)
+    from aicomp_sdk import SandboxEnv
+    from aicomp_sdk.attacks import AttackRunConfig
+    from aicomp_sdk.core.env.opaque import _OpaqueAttackEnv
+
+    def cands(cfg):
+        env = _OpaqueAttackEnv(SandboxEnv(
+            seed=123, fixtures_dir=fixtures, agent=LE._build_agent("compliant"),
+            guardrail=LE._guardrail_factory("optimal")(), max_tool_hops=4))
+        env.reset()
+        return [tuple(c.user_messages)
+                for c in ATTACK.AttackAlgorithm(cfg).run(env, AttackRunConfig(time_budget_s=12, max_tool_hops=4))]
+
+    assert cands({}) == cands({"use_dpp": False})
+
+
+def test_dpp_when_enabled_is_budget_safe_and_valid():
+    """With the DPP enabled, replay must still fit the budget and every candidate stays
+    valid (the optional path may not regress safety)."""
+    r = LE.run_local(agent_name="slow", guardrail_name="optimal",
+                     budget_s=20, attack_config={"use_dpp": True}, verbose=False)
+    assert r["replay_time_s"] < 20
+    assert r["gen_time_s"] < 20
+    assert r["score_raw"] >= 0
+
+
 def test_reference_guardrail_closes_all_routes_without_false_positives():
     """The working-note reference guardrail must drop FORGE's attack score to 0 and not
     block any benign action."""

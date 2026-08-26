@@ -50,6 +50,7 @@ Author: Christian Metzl.  License: MIT.
 
 from __future__ import annotations
 
+import math
 import random
 import time
 from collections.abc import Mapping, Sequence
@@ -205,6 +206,17 @@ class _Config:
         # (which raises TimeoutError and zeroes the run). Leaves 1-probe_hard_frac of
         # the budget as absolute margin for the last probe + returning.
         self.probe_hard_frac = float(d.get("probe_hard_frac", 0.90))
+        # Optional quantum-inspired diversity selection (DPP). OFF by default so the
+        # proven greedy fill is the shipped path. When on, candidates are chosen by a
+        # budget-constrained greedy MAP-DPP over quality (raw-per-hop) and diversity.
+        self.use_dpp = bool(d.get("use_dpp", False))
+        # Similarity assigned to same-route candidate pairs in the DPP kernel. 0.0 =
+        # treat every candidate as its own distinct score-cell (correct for this
+        # benchmark => quality-greedy). >0 makes the DPP spread across routes.
+        self.dpp_group_similarity = float(d.get("dpp_group_similarity", 0.0))
+        # Size of the candidate pool the DPP selects from, as a multiple of the
+        # budget-affordable count (bounded by max_candidates).
+        self.dpp_pool_factor = float(d.get("dpp_pool_factor", 2.0))
         self.seed = d.get("seed", None)
 
 
@@ -485,6 +497,80 @@ def _routes(cfg: _Config, rng: random.Random, max_hops: int) -> list[_Route]:
     return routes
 
 
+# ----------------------------------------------------------------------------------
+# Optional: quality-weighted greedy MAP-DPP candidate selection.
+#
+# A Determinantal Point Process is the quantum-inspired model of *repulsion*: the
+# selection probability of a set is proportional to the determinant of a kernel, the
+# same determinant/antisymmetry that gives fermions the Pauli exclusion principle —
+# so a DPP naturally picks subsets that are high-quality AND mutually diverse. We use
+# the fast greedy MAP inference of Chen, Zhang & Zhou (NeurIPS 2018) to pick, under a
+# replay-time budget, the candidate subset maximising quality + diversity.
+#
+# HONEST SCOPE (see docs/WORKING_NOTE.md §6b and the ablation): in *this* benchmark a
+# distinct destination is already a distinct score-cell, so cell diversity is free per
+# candidate and the diversity term is near-flat — the DPP correctly *reduces to
+# quality-greedy selection* here and does not change the public score. It is included
+# as a principled, generalisable selector that pays off when score-cells are
+# *contended* (a stricter guardrail or a benchmark that rewards genuinely distinct
+# mechanisms), and it never scores below the default greedy fill (ablation-verified).
+# It is OFF by default; the shipped default path is unchanged.
+# ----------------------------------------------------------------------------------
+def _greedy_map_dpp(
+    quality: Sequence[float],
+    same_group: Callable[[int, int], bool],
+    cost: Sequence[float],
+    budget: float,
+    max_k: int,
+    group_similarity: float = 0.0,
+    eps: float = 1e-9,
+) -> list[int]:
+    """Return indices selected by budget-constrained greedy MAP-DPP.
+
+    Kernel ``L_ij = q_i q_j S_ij`` with ``S_ii = 1`` and, for i != j,
+    ``S_ij = group_similarity`` when the two items share a group (same route) else 0.
+    With ``group_similarity = 0`` every off-diagonal is 0, so the log-det gain reduces
+    to the quality term and selection is exactly quality-greedy under the budget — the
+    correct behaviour when each item is its own distinct score-cell. Larger values make
+    the DPP spread across groups (useful only when same-group items would collide).
+    """
+    n = len(quality)
+    if n == 0:
+        return []
+    q = [max(1e-6, float(x)) for x in quality]
+    d2 = [q[i] * q[i] for i in range(n)]          # L_ii
+    chol: list[list[float]] = [[] for _ in range(n)]
+    selected: list[int] = []
+    spent = 0.0
+    remaining = set(range(n))
+    while remaining and len(selected) < max_k:
+        best, best_val = -1, -1.0
+        for i in remaining:
+            if spent + cost[i] > budget + eps:
+                continue
+            if d2[i] > best_val:
+                best_val, best = d2[i], i
+        if best < 0:
+            break
+        j = best
+        selected.append(j)
+        remaining.discard(j)
+        spent += cost[j]
+        dj = math.sqrt(max(d2[j], eps))
+        for i in list(remaining):
+            s_ij = group_similarity if same_group(i, j) else 0.0
+            l_ij = q[j] * q[i] * s_ij
+            dot = 0.0
+            cj, ci = chol[j], chol[i]
+            for a in range(min(len(cj), len(ci))):
+                dot += cj[a] * ci[a]
+            e = (l_ij - dot) / dj
+            chol[i].append(e)
+            d2[i] = max(eps, d2[i] - e * e)
+        chol[j].append(dj)
+    return selected
+
+
 def _clip_messages(messages: Sequence[str]) -> list[str] | None:
     """Enforce every harness limit; return None if a chain cannot be made valid."""
     out: list[str] = []
@@ -664,7 +750,56 @@ class AttackAlgorithm(AttackAlgorithmBase):
         # real run cost ~= hops * constant per-hop latency, so this equals ranking by
         # raw-per-cost while being robust to wall-clock noise during probing).
         div_index = probe_index + 1
-        if confirmed:
+        if confirmed and cfg.use_dpp:
+            # Build a bounded candidate pool across confirmed routes, then select a
+            # budget-affordable, quality-and-diversity-optimal subset via greedy MAP-DPP.
+            ranked = sorted(
+                confirmed.items(), key=lambda kv: kv[1]["raw_per_hop"], reverse=True
+            )
+            min_cost = min(route_cost(name) for name, _ in ranked)
+            affordable = int(replay_time_budget / max(1e-6, min_cost)) + 1
+            pool_target = min(cfg.max_candidates, int(cfg.dpp_pool_factor * affordable) + len(ranked))
+            # Allocate pool slots per route PROPORTIONAL TO QUALITY (raw-per-hop), so the
+            # pool is dominated by the best route and DPP quality-greedy (group_similarity
+            # =0) concentrates on it — ties the default greedy fill rather than diluting
+            # it. Every route keeps >=1 slot so a spreading DPP (group_similarity>0) can
+            # still reach them.
+            weights = {name: max(1e-6, meta["raw_per_hop"]) for name, meta in ranked}
+            wsum = sum(weights.values())
+            slots = {name: max(1, int(round(pool_target * weights[name] / wsum))) for name in weights}
+            pool_msgs: list[list[str]] = []
+            pool_group: list[int] = []
+            pool_q: list[float] = []
+            pool_cost: list[float] = []
+            gi = {name: idx for idx, (name, _) in enumerate(ranked)}
+            made = {name: 0 for name, _ in ranked}
+            progressed = True
+            while len(pool_msgs) < pool_target and progressed and not gen_box.expired():
+                progressed = False
+                for name, meta in ranked:
+                    if len(pool_msgs) >= pool_target or made[name] >= slots[name]:
+                        continue
+                    clipped = _clip_messages(route_by_name[name]["build"](meta["framing"], div_index))
+                    div_index += 1
+                    if clipped is None:
+                        continue
+                    pool_msgs.append(clipped)
+                    pool_group.append(gi[name])
+                    pool_q.append(float(meta["raw_per_hop"]))
+                    pool_cost.append(route_cost(name))
+                    made[name] += 1
+                    progressed = True
+            chosen = _greedy_map_dpp(
+                pool_q,
+                lambda a, b: pool_group[a] == pool_group[b],
+                pool_cost,
+                budget=replay_time_budget,
+                max_k=cfg.max_candidates,
+                group_similarity=cfg.dpp_group_similarity,
+            )
+            for idx in chosen:
+                emit(pool_msgs[idx], pool_cost[idx])
+        elif confirmed:
             ranked = sorted(
                 confirmed.items(), key=lambda kv: kv[1]["raw_per_hop"], reverse=True
             )

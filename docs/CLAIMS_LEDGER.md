@@ -26,6 +26,7 @@ predictions live in [`PREREGISTRATION.md`](PREREGISTRATION.md) as predictions.
 | C10 | Determinism under fixed seed | identical raw across two runs | `harness/local_eval.py` | `verify.py` 7 | Measured-offline | verified |
 | C11 | `DESTRUCTIVE_WRITE` unreachable under both known guardrails; `UNTRUSTED_TO_ACTION` unreachable under `OptimalGuardrail` (taint) but reachable under `guardrail_rules` via the "post"-keyword hole | DEST not scored; UNTRUSTED 528 @rules | `guardrails/optimal.py`, `attacks/baselines/guardrail_rules.py`, `core/predicates.py`; `attack.py:_tainted_share_messages` | `BENCHMARK_MECHANICS.md` §5; `results/local_evidence.json` (row 2) | Source-traced + Measured-offline | verified |
 | C12 | The SDK deterministic agent scores 0 under both guardrails via direct prompts (by construction) | raw 0 | `harness/local_eval.py` | `results/local_evidence.json` (row 5) | Measured-offline | verified (negative) |
+| C13 | Optional quantum-inspired DPP selector is OFF by default (default path byte-identical) and, when on, is mixed (helps public, hurts multi-route private) | off==default; +1254 public / −300 private @30s | `attack.py:_greedy_map_dpp` | `results/dpp_ablation.json`; `verify.py`; `tests` | Measured-offline | verified (shipped off; not claimed as an improvement) |
 | P-* | Real-model (GPT-OSS/Gemma) leaderboard outcomes | predictions only | — | [`PREREGISTRATION.md`](PREREGISTRATION.md) | Inferred | pending submission |
 
 Notes:

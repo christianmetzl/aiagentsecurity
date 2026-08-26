@@ -281,6 +281,40 @@ no benign false positives. It also doubles as a check on FORGE itself: against a
 that blocks every route, FORGE probes, finds nothing fires, and returns a small valid list
 scoring 0 with no crash — the same graceful degradation it shows against a refusing model.
 
+## 6b. A quantum-inspired diversity selector, and its honest verdict
+
+Since the score rewards diversity (`+2` per distinct cell), a natural question is
+whether a principled *diversity-maximising* selector beats the greedy fill. We
+implemented one: a **quality-weighted greedy MAP-DPP** (Chen, Zhang & Zhou, NeurIPS
+2018). A Determinantal Point Process is the quantum-inspired model of repulsion — its
+set probability is a kernel *determinant*, the same antisymmetry that gives fermions
+Pauli exclusion — so it selects subsets that are simultaneously high-quality and
+mutually diverse. It is self-contained in `attack.py` (`_greedy_map_dpp`,
+`use_dpp=True`), no external dependencies.
+
+We then did the disciplined thing: **ablated it** rather than assuming it helps
+(`results/dpp_ablation.json`, compliant/stubborn stand-ins, 30 s budget):
+
+| scenario | greedy (default) | DPP | Δ |
+|---|---:|---:|---:|
+| compliant · public (OptimalGuardrail) | 8976 | 10230 | **+1254** |
+| compliant · private proxy (guardrail_rules) | 4850 | 4550 | **−300** |
+| stubborn · public | 9042 | 10230 | +1188 |
+| multi-call-rejecting · public | 2406 | 2718 | +312 |
+
+The honest reading: **in this benchmark a distinct destination is already a distinct
+score-cell, so the diversity term is flat and the DPP reduces to quality-greedy
+concentration.** That helps where a single route dominates (the public column, by
+concentrating harder on the highest-severity route) but *under-serves the multi-route
+private column*, which the balanced default fill serves better. Net, it is a wash-to-
+negative on the column that most likely decides ranking, so **the DPP ships OFF by
+default and the shipped path is unchanged** (`use_dpp=False` is byte-identical to the
+default — a tested invariant). It is retained as a correct, generalisable component
+that pays off precisely when score-cells are *contended* — a stricter guardrail, or a
+future benchmark version that rewards genuinely distinct *mechanisms* rather than
+distinct destinations (a change we recommend in §6). We do not claim it improves our
+competition score; the ablation says it does not, and we report that as measured.
+
 ## 7. Responsible communication
 
 This note concerns only the offline competition benchmark. Every technique is scoped to

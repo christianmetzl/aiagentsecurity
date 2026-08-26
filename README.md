@@ -25,8 +25,9 @@ overrun** (which would zero the run).
 |---|---|
 | **`attack.py`** | The submission. Self-contained `AttackAlgorithm` (imports only `aicomp_sdk` contracts + stdlib, behind fallbacks). |
 | `notebook/forge_submission.ipynb` | The Kaggle notebook: writes `attack.py` to the working dir + an offline smoke test. Generated from `attack.py`. |
-| `verify.py` | **Single-command offline reproduction suite** (10 asserting checks, no GPU/network). |
+| `verify.py` | **Single-command offline reproduction suite** (13 asserting checks, no GPU/network). |
 | `harness/` | Offline evaluator (`local_eval.py`) + stand-in agents (`mock_agents.py`: compliant / stubborn / slow / null / multi-call-reject). |
+| `attack.py` (optional) | A self-contained quantum-inspired **DPP diversity selector** (`use_dpp`, **off by default**). Ablation (`results/dpp_ablation.json`) shows it's a wash-to-negative on the private column in this benchmark, so it stays off; retained for contended-cell settings. |
 | `defense/` | **Working-note artifact** (not a leaderboard submission): a reference guardrail that closes every FORGE route (`forge_guardrail.py`) + an attack→defense demo (`demo_defense.py`) showing FORGE's score collapse to 0 with 0 benign false positives. |
 | `tests/` | `pytest` suite (contract, validity, budget-safety, scoring, adaptivity, determinism). |
 | `docs/BENCHMARK_MECHANICS.md` | Source-traced map of how the benchmark scores — the design's foundation, and a reusable artifact for the benchmark community. |
@@ -38,9 +39,9 @@ overrun** (which would zero the run).
 
 ```bash
 pip install -r requirements-dev.txt      # aicomp_sdk (PyPI) + gymnasium + pydantic + pytest
-python verify.py                          # -> 10/10 PASS, offline, ~1 min
+python verify.py                          # -> 13/13 PASS, offline, ~2 min
 python -m harness.local_eval --agent compliant --guardrail optimal --budget 60
-python -m pytest -q                       # -> 12 passed
+python -m pytest -q                       # -> 17 passed
 ```
 
 `python -m harness.local_eval --help` lists agents (`compliant|stubborn|slow|null|
