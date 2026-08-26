@@ -305,12 +305,31 @@ and found none (`experiments/guardrail_bypass_search.py`; `results/guardrail_byp
   never consulted in `decide()` — dead code that makes it *less* strict than intended, though
   not exploitable for scoring.)
 
-So the honest, thorough conclusion is a strong *positive* result about the guardrails: **no
-genuine untrusted-driven or real-secret attack bypasses either provided guardrail.** The two
-things that score are metric-optimisation (the sentinel/density routes via the URL-not-payload
-gap on Optimal; user-instructed read-then-post-the-real-value via the keyword/matcher gaps on
-the strict baseline) — not genuine compromise. A realistic attack and a leaderboard-winning
-attack are, against these guardrails, different objects.
+The honest, complete conclusion is column-dependent, and it is *not* that the guardrails are
+unbreakable:
+
+* **The strict baseline genuinely leaks the real secret.** It allows reading `secret.txt`, and
+  its exfiltration matcher recognises only the `SECRET_MARKER` sentinel, so a read-then-post of
+  the *real* value (`SECRET_API_KEY=sk_live_…`) is allowed and fires `EXFILTRATION` — a genuine
+  real-data compromise, not metric-gaming. FORGE's `exfil_secret`/`batch_secret` routes do
+  exactly this (measured: the literal credential transits the sink). Weaker private variants
+  fall to real destruction and taint-laundered untrusted→action too (§3.4c).
+* **Optimal genuinely leaks through its egress-inspection gap (Bug 1)** — it never inspects the
+  `http.post` body — but on the public column that carries only the sentinel *marker*, because
+  the one defence we could not break, after an exhaustive search, is Optimal's secret-*read*
+  block. That block is airtight by **mutual exclusivity**: any path that canonicalises to
+  `secret.txt` (so the `EXFILTRATION` predicate registers the read) necessarily contains the
+  substring `secret` (so the filter denies it). We falsified every evasion — path encodings,
+  traversal, casing, null bytes, a Cyrillic homoglyph, hardlink aliases, leaky file copies, the
+  five-command shell, and web/email as a secret source — all dead (`results/
+  guardrail_bypass_search.json`). The secret is unreadable on Optimal by every channel, so
+  Bug 1 stays a marker there; on any guardrail that *does* let the secret be read, Bug 1 (or the
+  strict matcher gap) turns straight into real-credential exfiltration.
+
+The transferable lesson is precisely that mutual-exclusivity construction: a guardrail holds
+only when the identity it protects (canonical `secret.txt`) is a subset of what its filter
+denies. Our reference guardrail adopts it (provenance + canonical-path protection), which is
+why it closes every route.
 
 ### 3.4c An adaptive engine that infers and breaks an unknown guardrail
 
