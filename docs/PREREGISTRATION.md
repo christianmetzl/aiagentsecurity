@@ -29,7 +29,7 @@ assumption is disclosed wherever used and may be false.
   scoring pipeline and a *compliant tool-following* stand-in agent, FORGE produces
   findings that fire `EXFILTRATION` on `OptimalGuardrail` and (via the read-secret
   route) on `guardrail_rules`, with raw score > 0 and near one unique score-cell per
-  finding. → asserted by `verify.py` checks 1, 2, 10.
+  finding. → asserted by `verify.py` checks 1, 2, and the diversity check.
 * **P2 — Budget safety (not model-dependent).** For any target latency, the returned
   candidate list is sized so the replay pass completes strictly within its budget, and
   every returned candidate satisfies the harness validity limits. → `verify.py`

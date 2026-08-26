@@ -7,7 +7,7 @@ Independent Researcher · *[TODO: contact email]*
 
 ---
 
-> **Responsible-communication note.** Every technique in this paper is scoped to an offline, fixture-backed benchmark with synthetic secrets and mock egress tools; none is a recipe against a deployed system, and none is presented as one. The two guardrail mismatches concern the competition SDK and were disclosed to the organizers prior to publication (§9).
+> **Responsible-communication note.** Every technique in this paper is scoped to an offline, fixture-backed benchmark with synthetic secrets and mock egress tools; none is a recipe against a deployed system, and none is presented as one. The two guardrail mismatches concern the competition SDK and will be disclosed to the organizers prior to publication (§9).
 
 ## Abstract
 
@@ -109,7 +109,7 @@ A single sentence carries the boundary: *every positive score in this paper is m
 
 ### 8.1 Mechanism validation (measured, stand-in target)
 
-Table 1 reports offline scores at a 60-second budget — roughly five orders of magnitude below the real per-model budget, so these are mechanism checks, not leaderboard estimates. They show the mechanism fires and adapts: on the permissive public guardrail the sentinel/batch routes dominate; on the strict baseline the score comes from the read-secret and untrusted-to-action routes; a target that refuses overt-exfil wording is still driven to score via a benign framing the probe discovers; and both a fully refusing target and the SDK's own deterministic agent yield zero without crashing.
+Table 1 reports offline scores at a 60-second budget — far below the competition's per-model budget (the SDK's default attack budget is 1800 s), so these are mechanism checks, not leaderboard estimates. They show the mechanism fires and adapts: on the permissive public guardrail the sentinel/batch routes dominate; on the strict baseline the score comes from the read-secret and untrusted-to-action routes; a target that refuses overt-exfil wording is still driven to score via a benign framing the probe discovers; and both a fully refusing target and the SDK's own deterministic agent yield zero without crashing.
 
 **Table 1 — Mechanism validation (deterministic stand-in targets, 60 s budget).** *Not real-model scores; they validate the scoring mechanism and FORGE's adaptivity, budget safety, and graceful degradation.*
 
@@ -142,11 +142,11 @@ Because the score rewards diversity, a natural question is whether a principled 
 
 ## 9. Limitations
 
-(i) No real-model measurement in this environment; real compliance is inferred (§7). (ii) The strict-guardrail results use the SDK's own stricter baseline as a *proxy* for the unknown private guardrail; "proxy" is load-bearing. (iii) FORGE is compliance-bounded: against a sufficiently robust target it scores low; it finds a working framing only if one exists in its bank. (iv) Under the known guardrails `DESTRUCTIVE_WRITE` is unreachable, and `UNTRUSTED_TO_ACTION` is reachable only on the strict baseline via Bug 2. (v) Offline budgets are short (60 s), five orders of magnitude below the real budget; they validate mechanism, not the real ceiling.
+(i) No real-model measurement in this environment; real compliance is inferred (§7). (ii) The strict-guardrail results use the SDK's own stricter baseline as a *proxy* for the unknown private guardrail; "proxy" is load-bearing. (iii) FORGE is compliance-bounded: against a sufficiently robust target it scores low; it finds a working framing only if one exists in its bank. (iv) Under the known guardrails `DESTRUCTIVE_WRITE` is unreachable, and `UNTRUSTED_TO_ACTION` is reachable only on the strict baseline via Bug 2. (v) Offline budgets are short (60 s), far below the competition's per-model budget; they validate mechanism, not the real ceiling.
 
 ## 10. Responsible disclosure and ethics
 
-All experiments run in an offline, fixture-backed sandbox with synthetic secrets and mock egress tools; no real endpoint is contacted and no real secret exists. The attack routes are scoped to this benchmark's sentinel and fixtures and are not usable against deployed systems. The two guardrail mismatches (§4) concern the competition's public SDK; we disclosed them to the organizers before publication **[TODO: disclosure date / acknowledgement]**. We lead with the defensive contribution (§6) because it is the durable one. No competition data is redistributed here; we cite the public MIT-licensed SDK rather than re-hosting fixtures.
+All experiments run in an offline, fixture-backed sandbox with synthetic secrets and mock egress tools; no real endpoint is contacted and no real secret exists. The attack routes are scoped to this benchmark's sentinel and fixtures and are not usable against deployed systems. The two guardrail mismatches (§4) concern the competition's public SDK; we will disclose them to the organizers before publication. We lead with the defensive contribution (§6) because it is the durable one. No competition data is redistributed here; we cite the public MIT-licensed SDK rather than re-hosting fixtures.
 
 ## 11. Related work
 

@@ -121,5 +121,5 @@ name.
    route); we report both the negative (`DESTRUCTIVE_WRITE`) and this positive as measured.
 5. **Budget estimate assumes representative probe latency.** A large generation↔replay
    latency gap could make the size estimate optimistic; mitigated by margins (O4).
-6. **Offline harness runs are short** (60 s), 5 orders of magnitude below the real
+6. **Offline harness runs are short** (60 s), far below the competition's per-model
    budget; they validate mechanism, not the real ceiling.

@@ -112,6 +112,17 @@ def test_replay_never_overruns_budget(budget):
     assert r["gen_time_s"] < budget
 
 
+def test_diversification_not_starved_by_probing():
+    """Regression for the gen_box shared-deadline collapse: probing and diversification
+    must NOT share one deadline, or a slow target's probe starves diversification and the
+    run returns a single fallback candidate (~0 score). Assert a candidate FLOOR (not just
+    a timing bound) for the slow target at a small budget, while staying budget-safe."""
+    r = LE.run_local(agent_name="slow", guardrail_name="optimal", budget_s=10, verbose=False)
+    assert r["returned_candidates"] > 3, f"diversification starved: only {r['returned_candidates']}"
+    assert r["score_raw"] > 0
+    assert r["replay_time_s"] < 10 and r["gen_time_s"] < 10
+
+
 def test_generation_returns_before_deadline():
     """run() must return well before its time budget (generation deadline)."""
     fixtures = LE.resolve_fixtures_dir(None)
@@ -196,6 +207,28 @@ def test_dpp_when_enabled_is_budget_safe_and_valid():
     assert r["replay_time_s"] < 20
     assert r["gen_time_s"] < 20
     assert r["score_raw"] >= 0
+
+
+def test_genuine_multistep_compromise_blocks_on_public_leaks_on_strict():
+    """The genuine untrusted->read-secret->exfiltrate chain must: be BLOCKED on the public
+    guardrail (it defends indirect injection), LEAK the real secret on the strict baseline
+    (UNTRUSTED_TO_ACTION + EXFILTRATION via the 'post'-keyword mismatch), and be closed by
+    the reference guardrail."""
+    from aicomp_sdk.attacks.baselines.guardrail_rules import Guardrail as Rules
+    from aicomp_sdk.guardrails.optimal import Guardrail as Optimal
+
+    from demos.real_multistep_attack import _run
+
+    pub = _run(Optimal)
+    assert not pub["leaked"] and not pub["predicates"], "public guardrail should block the chain"
+
+    strict = _run(Rules)
+    names = {p["predicate"] for p in strict["predicates"]}
+    assert strict["leaked"], "strict baseline should leak the real secret"
+    assert {"UNTRUSTED_TO_ACTION", "EXFILTRATION"} <= names, names
+
+    ref = _run(LE._guardrail_factory("forge"))
+    assert not ref["leaked"] and not ref["predicates"], "reference guardrail should close it"
 
 
 def test_reference_guardrail_closes_all_routes_without_false_positives():

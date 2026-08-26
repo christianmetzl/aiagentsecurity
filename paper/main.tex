@@ -54,7 +54,7 @@ released under MIT.
 \noindent\textbf{Responsible-communication note.} Every technique in this paper is
 scoped to an offline, fixture-backed benchmark with synthetic secrets and mock egress
 tools; none is a recipe against a deployed system, and none is presented as one. The
-two guardrail mismatches concern the competition SDK and were disclosed to the
+two guardrail mismatches concern the competition SDK and will be disclosed to the
 organizers prior to publication (\S\ref{sec:disclosure}).
 
 \section{Introduction}\label{sec:intro}
@@ -292,8 +292,8 @@ model's compliance rate.}
 
 \subsection{Mechanism validation (measured, stand-in target)}
 
-Table~\ref{tab:mechanism} reports offline scores at a 60-second budget --- roughly five
-orders of magnitude below the real per-model budget, so these are mechanism checks, not
+Table~\ref{tab:mechanism} reports offline scores at a 60-second budget --- far below the
+competition's per-model budget (the SDK's default attack budget is 1800\,s), so these are mechanism checks, not
 leaderboard estimates. They show the mechanism fires and adapts: on the permissive public
 guardrail the sentinel/batch routes dominate; on the strict baseline the score comes from
 the read-secret and untrusted-to-action routes; a target that refuses overt-exfil wording
@@ -371,8 +371,8 @@ baseline as a \emph{proxy} for the unknown private guardrail; ``proxy'' is load-
 (iii) FORGE is compliance-bounded: against a sufficiently robust target it scores low; it
 finds a working framing only if one exists in its bank. (iv) Under the known guardrails
 \code{DESTRUCTIVE\_WRITE} is unreachable, and \code{UNTRUSTED\_TO\_ACTION} is reachable
-only on the strict baseline via Bug 2. (v) Offline budgets are short (60\,s), five orders
-of magnitude below the real budget; they validate mechanism, not the real ceiling.
+only on the strict baseline via Bug 2. (v) Offline budgets are short (60\,s), far below the competition's
+per-model budget; they validate mechanism, not the real ceiling.
 
 \section{Responsible disclosure and ethics}\label{sec:disclosure}
 
@@ -380,8 +380,7 @@ All experiments run in an offline, fixture-backed sandbox with synthetic secrets
 egress tools; no real endpoint is contacted and no real secret exists. The attack routes
 are scoped to this benchmark's sentinel and fixtures and are not usable against deployed
 systems. The two guardrail mismatches (\S\ref{sec:bugs}) concern the competition's public
-SDK; we disclosed them to the organizers before publication
-\placeholder{disclosure date / acknowledgement}. We lead with the defensive contribution
+SDK; we will disclose them to the organizers before publication. We lead with the defensive contribution
 (\S\ref{sec:defense}) because it is the durable one. No competition data is redistributed
 here; we cite the public MIT-licensed SDK rather than re-hosting fixtures.
 

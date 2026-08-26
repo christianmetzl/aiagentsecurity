@@ -206,6 +206,11 @@ class _Config:
         # (which raises TimeoutError and zeroes the run). Leaves 1-probe_hard_frac of
         # the budget as absolute margin for the last probe + returning.
         self.probe_hard_frac = float(d.get("probe_hard_frac", 0.90))
+        # Diversification/insurance (Phases 3-4) do NO model I/O (they only build
+        # candidate strings), so they get their OWN, later deadline than the probe's
+        # gen_box — otherwise a probe that runs to gen_safety starves diversification and
+        # the run collapses to a single fallback candidate.
+        self.diversify_frac = float(d.get("diversify_frac", 0.97))
         # Optional quantum-inspired diversity selection (DPP). OFF by default so the
         # proven greedy fill is the shipped path. When on, candidates are chosen by a
         # budget-constrained greedy MAP-DPP over quality (raw-per-hop) and diversity.
@@ -507,13 +512,18 @@ def _routes(cfg: _Config, rng: random.Random, max_hops: int) -> list[_Route]:
 # the fast greedy MAP inference of Chen, Zhang & Zhou (NeurIPS 2018) to pick, under a
 # replay-time budget, the candidate subset maximising quality + diversity.
 #
-# HONEST SCOPE (see docs/WORKING_NOTE.md §6b and the ablation): in *this* benchmark a
-# distinct destination is already a distinct score-cell, so cell diversity is free per
-# candidate and the diversity term is near-flat — the DPP correctly *reduces to
-# quality-greedy selection* here and does not change the public score. It is included
-# as a principled, generalisable selector that pays off when score-cells are
-# *contended* (a stricter guardrail or a benchmark that rewards genuinely distinct
-# mechanisms), and it never scores below the default greedy fill (ablation-verified).
+# HONEST SCOPE (see docs/WORKING_NOTE.md §6b and results/dpp_ablation.json): the DPP's
+# value hinges on whether score-cells are CONTENDED. In our OFFLINE ablation each
+# candidate already earns a distinct cell (distinct http.post destination domain), so
+# diversity is "free", the diversity term is near-flat, and the DPP reduces to
+# quality-greedy selection — which HELPS the public column (+1254 raw by concentrating on
+# the top-severity route) but slightly COSTS the multi-route strict proxy (-300). That
+# "free diversity" is a property of the compliant MOCK and is UNMEASURED against the real
+# targets: if real-model compliance is partial, or the private guardrail collapses
+# distinct candidates onto the same cell, cells become contended and the DPP's diversity
+# selection becomes genuinely valuable. It therefore ships OFF by default (the shipped
+# path is byte-identical) pending real-model data, at which point its default is
+# re-evaluated -- it is a principled conditional component, not claimed inert.
 # It is OFF by default; the shipped default path is unchanged.
 # ----------------------------------------------------------------------------------
 def _greedy_map_dpp(
@@ -639,6 +649,7 @@ class AttackAlgorithm(AttackAlgorithmBase):
         rng = random.Random((int(seed_val) << 8) ^ 0xF0A6E)
 
         gen_box = _make_timebox(total_budget * cfg.gen_safety)
+        diversify_box = _make_timebox(total_budget * cfg.diversify_frac)
 
         probe_hops = 0
         probe_time = 0.0
@@ -774,7 +785,7 @@ class AttackAlgorithm(AttackAlgorithmBase):
             gi = {name: idx for idx, (name, _) in enumerate(ranked)}
             made = {name: 0 for name, _ in ranked}
             progressed = True
-            while len(pool_msgs) < pool_target and progressed and not gen_box.expired():
+            while len(pool_msgs) < pool_target and progressed and not diversify_box.expired():
                 progressed = False
                 for name, meta in ranked:
                     if len(pool_msgs) >= pool_target or made[name] >= slots[name]:
@@ -815,7 +826,7 @@ class AttackAlgorithm(AttackAlgorithmBase):
             used: dict[str, float] = {name: 0.0 for name, _ in ranked}
 
             progressed = True
-            while progressed and not gen_box.expired():
+            while progressed and not diversify_box.expired():
                 progressed = False
                 for name, meta in ranked:
                     cost = route_cost(name)
@@ -831,7 +842,7 @@ class AttackAlgorithm(AttackAlgorithmBase):
             # If a reserve went unspent (e.g. a route saturated its allocation early),
             # let the best route consume the remaining global budget.
             progressed = True
-            while progressed and not gen_box.expired():
+            while progressed and not diversify_box.expired():
                 progressed = False
                 cost = route_cost(best_name)
                 if can_afford(cost):
@@ -846,13 +857,13 @@ class AttackAlgorithm(AttackAlgorithmBase):
         # therefore keep it SMALL — it only earns points if the private guardrail
         # (which we never see) differs enough that an unprobed route would fire there.
         # The budget is spent primarily on the confirmed routes above.
-        if not gen_box.expired():
+        if not diversify_box.expired():
             for route in route_defs:
                 if route["name"] in confirmed:
                     continue
                 cost = route_cost(route["name"])
                 for k in range(cfg.insurance_per_route):
-                    if gen_box.expired() or not can_afford(cost):
+                    if diversify_box.expired() or not can_afford(cost):
                         break
                     messages = route["build"](k % cfg.framings_per_route, div_index)
                     div_index += 1

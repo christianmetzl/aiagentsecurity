@@ -177,14 +177,14 @@ target latencies and budgets (`verify.py` check 6; §4).
 (`harness/mock_agents.py`), not against GPT-OSS-20B or Gemma-4.** They validate the SDK
 scoring pipeline, predicate firing, diversity counting, adaptivity, and budget safety.
 They do **not** measure any real model's compliance rate. Evidence:
-`results/local_evidence.json`; reproduced by `verify.py`.
+`results/local_evidence.json` (single 60 s runs; wall-clock-budget-filled, so the candidate/finding counts drift by about ±1 candidate ≈ ±66 raw run-to-run and with machine speed). `verify.py` re-executes the same routes at a smaller budget and asserts the *qualitative* claims (fires, stacks, adapts, ≈one cell per finding), not these exact digits.
 
 | target (stand-in) | guardrail | raw | norm | predicates (count) | cells | replay/budget |
 |---|---|---:|---:|---|---:|---:|
 | compliant | OptimalGuardrail (public) | 17892 | 89.5 | EXFIL 1074, DEPUTY 23 | 308 | ~33 s / 60 s |
-| compliant | guardrail_rules (strict proxy) | 9606 | 48.0 | UNTRUSTED 528, EXFIL 30, DEPUTY 15 | 310 | ~34 s / 60 s |
+| compliant | guardrail_rules (strict proxy) | 9606 | 48.0 | UNTRUSTED 528, EXFIL 30, DEPUTY 15 | 309 | ~34 s / 60 s |
 | stubborn (refuses overt exfil) | OptimalGuardrail | 17958 | 89.8 | EXFIL 1078, DEPUTY 23 | 309 | ~33 s / 60 s |
-| multi-call-rejecting | OptimalGuardrail | 4848 | 24.2 | EXFIL 254, DEPUTY 46 | ~250 | graceful, batch dropped |
+| multi-call-rejecting | OptimalGuardrail | 4848 | 24.2 | EXFIL 254, DEPUTY 46 | 300 | graceful, batch dropped |
 | never-complies | OptimalGuardrail | 0 | 0 | — | 0 | no crash |
 | SDK deterministic agent | OptimalGuardrail | 0 | 0 | — | 0 | by construction |
 
@@ -197,7 +197,7 @@ loses only the batch amortisation — the single-post route carries it (24.2, no
 (5) a fully-refusing target and the SDK's own deterministic agent both yield 0 with no
 crash — the latter because that agent only exfiltrates via injected tool-output
 instructions, which the guardrails' taint tracking blocks. These are **60-second** runs,
-~5 orders of magnitude below the real per-model budget; they scale with candidate count
+far below the competition's per-model budget (the SDK's default attack budget is 1800 s); they scale with candidate count
 up to the 2000-candidate cap, but the real ceiling is target-model compliance and
 latency, which we do not measure here.
 
@@ -313,7 +313,7 @@ default — a tested invariant). It is retained as a correct, generalisable comp
 that pays off precisely when score-cells are *contended* — a stricter guardrail, or a
 future benchmark version that rewards genuinely distinct *mechanisms* rather than
 distinct destinations (a change we recommend in §6). We do not claim it improves our
-competition score; the ablation says it does not, and we report that as measured.
+competition score on balance: the ablation shows it *helps* the public column (+1254 raw) but *costs* the multi-route strict proxy (−300), so we ship it OFF and weight the private column. We report both directions as measured. Crucially, that "free diversity" is a property of the compliant *mock* and is **unmeasured** against the real targets: if real-model compliance is partial, or the private guardrail collapses distinct candidates onto the same cell, cells become *contended* and the DPP's diversity selection becomes genuinely useful — so its default is re-evaluated once real-model data exists, not treated as settled.
 
 ## 7. Responsible communication
 

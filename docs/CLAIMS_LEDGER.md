@@ -18,7 +18,7 @@ predictions live in [`PREREGISTRATION.md`](PREREGISTRATION.md) as predictions.
 | C2 | On `OptimalGuardrail`, a compliant target's `http.post`+`SECRET_MARKER` fires EXFILTRATION | raw 17892, 1074 EXFILTRATION, 308 cells @60s | `harness/local_eval.py` | `results/local_evidence.json` (row 1); `verify.py` 1,4 | Measured-offline | verified |
 | C3 | On the stricter `guardrail_rules`, FORGE adapts (read-secret + tainted-share) and still scores EXFILTRATION/UNTRUSTED_TO_ACTION | raw 9606; EXFIL 30 + UNTRUSTED_TO_ACTION 528 @60s | `harness/local_eval.py` | `results/local_evidence.json` (row 2); `verify.py` 2 | Measured-offline | verified |
 | C4 | Severity stacking: batch route yields >1 EXFILTRATION per candidate | 1074 EXFILTRATION across 308 findings | `harness/local_eval.py` | `verify.py` 4 | Measured-offline | verified |
-| C5 | Diversity: ≈one unique score-cell per finding | 308 cells / 308 findings | `harness/local_eval.py` | `verify.py` 10 | Measured-offline | verified |
+| C5 | Diversity: ≈one unique score-cell per finding | 308 cells / 308 findings | `harness/local_eval.py` | `verify.py` (diversity check) | Measured-offline | verified |
 | C6 | Replay never overruns budget under slow-target latency | replay < budget at 10s, 20s | `harness/local_eval.py` (slow agent) | `verify.py` 6; `tests` | Measured-offline | verified |
 | C7 | Every returned candidate satisfies harness validity limits | ≤2000 chars, ≤32 msgs, non-empty, ≤2000 candidates | `attack.py:_clip_messages` | `verify.py` 5; `tests` | Measured-offline | verified |
 | C8 | Adaptivity past refusals: benign framing found for a target refusing overt-exfil phrasing | raw 17958 (stubborn) | `harness/mock_agents.py:StubbornToolAgent` | `results/local_evidence.json` (row 3); `verify.py` 3 | Measured-offline | verified |
@@ -26,12 +26,12 @@ predictions live in [`PREREGISTRATION.md`](PREREGISTRATION.md) as predictions.
 | C10 | Determinism under fixed seed | identical raw across two runs | `harness/local_eval.py` | `verify.py` 7 | Measured-offline | verified |
 | C11 | `DESTRUCTIVE_WRITE` unreachable under both known guardrails; `UNTRUSTED_TO_ACTION` unreachable under `OptimalGuardrail` (taint) but reachable under `guardrail_rules` via the "post"-keyword hole | DEST not scored; UNTRUSTED 528 @rules | `guardrails/optimal.py`, `attacks/baselines/guardrail_rules.py`, `core/predicates.py`; `attack.py:_tainted_share_messages` | `BENCHMARK_MECHANICS.md` §5; `results/local_evidence.json` (row 2) | Source-traced + Measured-offline | verified |
 | C12 | The SDK deterministic agent scores 0 under both guardrails via direct prompts (by construction) | raw 0 | `harness/local_eval.py` | `results/local_evidence.json` (row 5) | Measured-offline | verified (negative) |
-| C13 | Optional quantum-inspired DPP selector is OFF by default (default path byte-identical) and, when on, is mixed (helps public, hurts multi-route private) | off==default; +1254 public / −300 private @30s | `attack.py:_greedy_map_dpp` | `results/dpp_ablation.json`; `verify.py`; `tests` | Measured-offline | verified (shipped off; not claimed as an improvement) |
+| C13 | Optional quantum-inspired DPP selector is OFF by default (default path byte-identical) and, when on, is mixed (helps public, hurts multi-route private) | off==default; +1254 public / −300 private @30s (mock); real-model value unmeasured — depends on cell contention | `attack.py:_greedy_map_dpp` | `results/dpp_ablation.json`; `verify.py`; `tests` | Measured-offline | verified (shipped off; not claimed as an improvement) |
 | P-* | Real-model (GPT-OSS/Gemma) leaderboard outcomes | predictions only | — | [`PREREGISTRATION.md`](PREREGISTRATION.md) | Inferred | pending submission |
 
 Notes:
-* Offline scores are at a **60-second** budget (5 orders of magnitude below the real
-  ~9000 s/model). They are mechanism checks; they scale with candidate count up to the
+* Offline scores are at a **60-second** budget (far below the competition's per-model budget — the SDK's default attack budget is
+  1800 s; the real per-model budget is larger but not specified in the SDK). They are mechanism checks; they scale with candidate count up to the
   2000-candidate cap, but the real ceiling is target-model compliance and latency, which
   are **not** measured here (C-P row).
 * `guardrail_rules` is the SDK's own stricter baseline, used as a *plausible proxy* for
