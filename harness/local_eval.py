@@ -81,6 +81,8 @@ def _guardrail_factory(name: str):
         "short_taint": "ShortTaintGuardrail", "readable_secret": "ReadableSecretGuardrail",
         "no_write_protect": "NoWriteProtectGuardrail", "no_exec": "NoExecGuardrail",
         "optimal_like": "OptimalLike", "allow": "PermissiveGuardrail",
+        "persistent_provenance": "PersistentProvenancePermissive",
+        "persistent_provenance_strict": "PersistentProvenanceStrict",
     }
     if name in variant_names:
         from harness import guardrail_variants as GV
