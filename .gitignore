@@ -1,0 +1,16 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+.ipynb_checkpoints/
+results/*.local
+scratch/
+*.egg-info/
+
+# LaTeX build artifacts (keep main.pdf/main.docx as deliverables)
+paper/*.aux
+paper/*.log
+paper/*.out
+
+# Generated knowledge-transfer / release snapshots (redundant with the git history)
+FORGE_knowledge_transfer.zip
+*.zip

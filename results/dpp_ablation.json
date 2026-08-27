@@ -1,0 +1,46 @@
+{
+  "note": "DPP ablation (compliant/stubborn stand-ins, 30s budget). Verdict: the DPP is mixed in this benchmark (distinct destinations already give distinct score-cells, so diversity is free): it concentrates harder on public (helps) but slightly under-serves multi-route private (hurts). It is therefore shipped OFF by default (use_dpp=False); the default greedy fill is unchanged. The DPP is a correct, generalizable component for CONTENDED-cell settings.",
+  "attack_commit_parent": "95df4e02e7487eb0e393d9d5cebd2b7e6fa93975",
+  "rows": [
+    {
+      "agent": "compliant",
+      "guardrail": "optimal",
+      "budget_s": 30,
+      "greedy_raw": 8976.0,
+      "dpp_raw": 10230.0,
+      "delta": 1254.0,
+      "greedy_replay_s": 16.411,
+      "dpp_replay_s": 15.976
+    },
+    {
+      "agent": "compliant",
+      "guardrail": "rules",
+      "budget_s": 30,
+      "greedy_raw": 4850.0,
+      "dpp_raw": 4550.0,
+      "delta": -300.0,
+      "greedy_replay_s": 16.59,
+      "dpp_replay_s": 16.617
+    },
+    {
+      "agent": "stubborn",
+      "guardrail": "optimal",
+      "budget_s": 30,
+      "greedy_raw": 9042.0,
+      "dpp_raw": 10230.0,
+      "delta": 1188.0,
+      "greedy_replay_s": 16.38,
+      "dpp_replay_s": 16.977
+    },
+    {
+      "agent": "multicall_reject",
+      "guardrail": "optimal",
+      "budget_s": 30,
+      "greedy_raw": 2406.0,
+      "dpp_raw": 2718.0,
+      "delta": 312.0,
+      "greedy_replay_s": 15.64,
+      "dpp_replay_s": 16.589
+    }
+  ]
+}
