@@ -10,3 +10,7 @@ scratch/
 paper/*.aux
 paper/*.log
 paper/*.out
+
+# Generated knowledge-transfer / release snapshots (redundant with the git history)
+FORGE_knowledge_transfer.zip
+*.zip
