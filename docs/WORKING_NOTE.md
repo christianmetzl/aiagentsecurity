@@ -315,21 +315,32 @@ unbreakable:
   exactly this (measured: the literal credential transits the sink). Weaker private variants
   fall to real destruction and taint-laundered untrusted→action too (§3.4c).
 * **Optimal genuinely leaks through its egress-inspection gap (Bug 1)** — it never inspects the
-  `http.post` body — but on the public column that carries only the sentinel *marker*, because
-  the one defence we could not break, after an exhaustive search, is Optimal's secret-*read*
-  block. That block is airtight by **mutual exclusivity**: any path that canonicalises to
-  `secret.txt` (so the `EXFILTRATION` predicate registers the read) necessarily contains the
-  substring `secret` (so the filter denies it). We falsified every evasion — path encodings,
-  traversal, casing, null bytes, a Cyrillic homoglyph, hardlink aliases, leaky file copies, the
-  five-command shell, and web/email as a secret source — all dead (`results/
-  guardrail_bypass_search.json`). The secret is unreadable on Optimal by every channel, so
-  Bug 1 stays a marker there; on any guardrail that *does* let the secret be read, Bug 1 (or the
-  strict matcher gap) turns straight into real-credential exfiltration.
+  `http.post` body — so Optimal is **not** airtight; we exploit that hole (the sentinel post
+  scores `EXFILTRATION`). On the public column it carries only the *marker*, because a second,
+  orthogonal defence — Optimal's secret-*read* block — resisted every attack we could construct
+  *in this environment*. We stress "resisted", not "unbreakable": nothing in security is. What
+  we did is falsify a large, deliberately adversarial battery against the real fs tool and the
+  live guardrail — **624 path encodings** (traversal, mixed separators, casing, null/zero-width/
+  combining unicode, NFKC/NFKD forms, URL-encoding, fullwidth homoglyphs), hardlink aliases,
+  leaky file copies, the five-command shell, web/email as a secret source, the guardrail glue
+  (no fail-open, no check-vs-execute divergence), the (empty-in-replay) hook layer, and the
+  `user_authorized` context key (never set) — none read the secret while the guardrail allowed
+  (`results/guardrail_bypass_search.json`). The structural reason it held is a near-mutual-
+  exclusivity (any path canonicalising to `secret.txt` carries the substring `secret`, which the
+  filter lowercases and denies) plus the predicate's in-trace-read requirement (a hard-coded or
+  public-fixture secret does not count). **The surface we cannot test here is the real target
+  model:** the deterministic stand-in does exactly what we ask, but GPT-OSS-20B / Gemma might be
+  driven to reconstruct or leak the secret through channels a mock cannot exhibit — that, not the
+  guardrail logic, is where a residual crack would most plausibly live, and it is measured only
+  on the competition's own GPU replay.
 
-The transferable lesson is precisely that mutual-exclusivity construction: a guardrail holds
-only when the identity it protects (canonical `secret.txt`) is a subset of what its filter
-denies. Our reference guardrail adopts it (provenance + canonical-path protection), which is
-why it closes every route.
+For scoring this barely matters: Bug 1 already scores on the public column, the private column
+is unknown (and cracked wherever the secret is readable — §3.4c), and density-packing maxes the
+number either way. The transferable defensive lesson is the construction that made the read-block
+hard: a guardrail resists this class of attack only when the identity it protects (canonical
+`secret.txt`) is a subset of what its filter denies, *and* it verifies provenance rather than
+surface strings. Our reference guardrail adopts both, which is why it closes every route here —
+though we make no claim it is unbreakable either.
 
 ### 3.4c An adaptive engine that infers and breaks an unknown guardrail
 
