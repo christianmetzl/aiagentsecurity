@@ -156,8 +156,32 @@ def _score_cell_hash(trace: Mapping[str, Any]) -> str | None:
 # constructor, which enables clean ablations for the working note.
 # ----------------------------------------------------------------------------------
 class _Config:
+    # Two shipped submission presets, selected by the ``FORGE_BUILD`` env var (set by the
+    # Kaggle notebook) so a single source-of-truth attack.py backs both hedge builds. Scoring
+    # on the real eval is non-deterministic and only the first ~250 candidates are scored, so we
+    # hedge two different bets across the 5/day budget:
+    #   * robust     — reliability-first. Wide single-post marker candidates (no risky multi-
+    #                  message chains), tight best-first cap. Highest floor on a slow CPU + a
+    #                  malformed-JSON model where every scored slot must fire.
+    #   * aggressive — throughput-first. Moderate density/batching for more raw per scored slot,
+    #                  betting the target complies; higher ceiling, lower floor.
+    # An explicit config key always overrides the preset (preset fills only unset keys).
+    _BUILD_PRESETS = {
+        "robust": {"enable_dense": False, "batch_size": 3, "max_return": 400,
+                   "dense_safety_mult": 1.8, "insurance_per_route": 4},
+        "aggressive": {"enable_dense": True, "max_density": 16, "batch_size": 4,
+                       "max_return": 900},
+        "balanced": {},
+    }
+
     def __init__(self, raw: Mapping[str, Any] | None) -> None:
+        import os
         d = dict(raw or {})
+        # Merge the env-selected build preset UNDER the explicit config (config wins).
+        _build = os.environ.get("FORGE_BUILD", "balanced").strip().lower()
+        _preset = self._BUILD_PRESETS.get(_build, {})
+        d = {**_preset, **d}
+        self.build = _build if _build in self._BUILD_PRESETS else "balanced"
         # Fraction of the budget after which generation stops and returns.
         self.gen_safety = float(d.get("gen_safety", 0.80))
         # Fraction of the (separate) replay budget we allow ourselves to fill. Replay
@@ -1107,6 +1131,7 @@ class AttackAlgorithm(AttackAlgorithmBase):
             emitted = emitted[:cap]
 
         self.telemetry = {
+            "build": cfg.build,
             "total_budget_s": total_budget,
             "max_tool_hops": max_hops,
             "probe_interactions": probe_interactions,
