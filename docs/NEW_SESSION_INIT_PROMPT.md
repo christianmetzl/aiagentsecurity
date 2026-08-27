@@ -20,7 +20,13 @@ FIRST, before anything else, read these in order and confirm you've absorbed the
 2. `docs/COMPETITION_INTEL.md`   (forum intelligence + game-changing brainstorm)
 3. `docs/WORKING_NOTE.md`, `docs/CLAIMS_LEDGER.md`, `docs/BENCHMARK_MECHANICS.md`
 Then run `git log --oneline -8` and `python -m pytest tests/test_attack.py -q` to confirm state
-(expect 25 passed; the tree is clean at commit bce8b94 or later).
+(expect 25 passed; the tree is clean at commit c93a2fa or later).
+
+Key already-validated result to NOT re-litigate: the offline public→private transfer dry-run
+(`experiments/transfer_dryrun.py`) proves FORGE's public-generated list is **DUAL-COLUMN** —
+identical score on the public guardrail and both `persistent_provenance` private hypotheses — so
+the routing decision is **hold, do NOT rebalance toward a private-only (real-secret read+post)
+route**. That would trade all-column candidates for one-column with no measured upside.
 
 State in one line: FORGE (`attack.py`) is done and green — adaptive density-packing + genuine
 guardrail-breaking insurance routes, budget-safe, with build presets via `FORGE_BUILD`
@@ -34,11 +40,16 @@ THEN do this, in priority order:
       `kaggle_evaluation/jed_attack_*` to get the GROUND-TRUTH gateway: real budget, the exact
       candidate-scoring cap, ordering, timeout. Reconcile against our forum-inferred "~250
       candidates / DEFAULT_BUDGET_S=900" and tune `attack.py` (`max_return`, density, ordering).
-   b. DRY-RUN both notebooks against the real gateway offline (the `launch.py` `else` branch
+   b. **Run `python scripts/kaggle_dryrun.py`** — it auto-locates the downloaded data, imports the
+      REAL `aicomp_private_guardrails.persistent_provenance.Guardrail`, replays FORGE's list on it,
+      and reports whether our modeled permissive/strict bracketed reality. If REAL differs, update
+      `harness/guardrail_variants.py` to match and only THEN reconsider routing.
+   c. DRY-RUN both notebooks against the real gateway offline (the `launch.py` `else` branch
       pattern in COMPETITION_INTEL.md) to catch wiring bugs before spending submissions.
-   c. Pull forum threads 712642 (Evaluator FAQ, updated 2026-08-27) and 736099 ("One hint on
+   d. Pull forum threads 712642 (Evaluator FAQ, updated 2026-08-27) and 736099 ("One hint on
       crafting attacks"); fold any rule change / actionable hint into attack.py + the intel doc.
-   If the Kaggle tools do NOT load, tell me — it's a session-scope refresh issue, not my fault.
+   If the Kaggle tools do NOT load, you can still run the real check from a **Kaggle notebook**:
+   attach the competition data and run `python scripts/kaggle_dryrun.py` there (no MCP needed).
 2. Have me test-submit the `robust` notebook once to confirm the gateway scores; then run the
    2-build hedge (robust + aggressive) across the 5/day budget.
 3. Keep everything committed + pushed to `claude/agent-security-multistep-attack`, tests green.

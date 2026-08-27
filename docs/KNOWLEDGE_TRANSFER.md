@@ -4,9 +4,19 @@
 session ends. Read this first in a new session, then `docs/COMPETITION_INTEL.md`,
 `docs/WORKING_NOTE.md`, and `docs/CLAIMS_LEDGER.md`.
 
-Last updated at commit `bce8b94` on branch `claude/agent-security-multistep-attack`
+Last updated at commit `c93a2fa` on branch `claude/agent-security-multistep-attack`
 (repo `christianmetzl/aiagentsecurity`). Working tree clean, all pushed. **25/25 tests green,
 `verify.py` 13/13.**
+
+> **Latest (c93a2fa):** added `experiments/transfer_dryrun.py` — the offline proxy for the
+> competition's public→private candidate-transfer scoring. It generates FORGE's list on the
+> PUBLIC guardrail and replays the SAME list on the public + both `persistent_provenance` private
+> hypotheses. Result across all presets: the list is **perfectly DUAL-COLUMN** (identical score on
+> all three columns), because the sentinel/dense candidates are guardrail-agnostic. This is
+> full-list evidence for **hold routing / do NOT rebalance toward a private-only route**. Also
+> staged `scripts/kaggle_dryrun.py`: run it once the Kaggle data is downloaded to import the REAL
+> private guardrail and confirm our models bracketed reality. Kaggle MCP was disconnected for the
+> download itself — see §7 for the two clean ways to run the real-guardrail check.
 
 ---
 
@@ -31,7 +41,8 @@ Last updated at commit `bce8b94` on branch `claude/agent-security-multistep-atta
 
 ## 1. Where we stand (done + validated)
 The submission is `attack.py` = **FORGE** (Fingerprint-Oriented Replay-Guided Exploration).
-Commits (newest first): `bce8b94` hedge notebooks + gateway-serve fix; `713c84e` intel doc +
+Commits (newest first): `c93a2fa` public→private transfer dry-run + staged real-data kickoff;
+`bce8b94` hedge notebooks + gateway-serve fix; `713c84e` intel doc +
 robust framings; `71de6a6` best-first order + cap + robust dense gate; `5a1b78f`
 persistent_provenance variants; `e1586ca` retract "airtight"; `a3dff3b` strict leaks real
 secret / Optimal Bug 1; earlier: dense-packing, Path-C adaptive engine, folded genuine routes,
@@ -185,7 +196,17 @@ From `aicomp_sdk==3.1.2` (PyPI, MIT; competition ships the same version). See
 ---
 
 ## 7. PENDING / NEXT STEPS (do these in a fresh session)
-1. **Run `python scripts/kaggle_dryrun.py`** once the competition data is downloaded — it imports the REAL `aicomp_private_guardrails.persistent_provenance`, replays FORGE's public-generated list on it (via `experiments/transfer_dryrun.py`), and tells you if our modeled permissive/strict bracketed reality. Offline transfer dry-run already shows the list is DUAL-COLUMN (same score on public + both private hypotheses), validating hold-routing.
+1. **Run the real-guardrail check** — the ONE thing the offline work can't do (the real
+   `aicomp_private_guardrails.persistent_provenance` + `kaggle_evaluation` gateway ship only in the
+   Kaggle dataset). Two clean ways, neither needs a working Kaggle MCP:
+   - **(a) In a Kaggle notebook (recommended):** attach the competition data (mounts at
+     `/kaggle/input`), then `python scripts/kaggle_dryrun.py`. That's the natural home for the data.
+   - **(b) In a fresh Claude session:** it picks up the Kaggle connector cleanly →
+     `mcp__Kaggle__download_competition_data_files` (LOCAL only, do NOT commit) → same script.
+   `scripts/kaggle_dryrun.py` imports the REAL private guardrail, replays FORGE's public-generated
+   list on it (via `experiments/transfer_dryrun.py`), and tells you if our modeled permissive/strict
+   bracketed reality. The offline transfer dry-run already shows the list is **DUAL-COLUMN** (same
+   score on public + both private hypotheses), validating **hold-routing** with full-list evidence.
 2. **Kaggle MCP** (the current session lost it mid-run; a FRESH session picks it up):
    - Confirm `mcp__Kaggle__*` tools load.
    - **Download the competition data** (`mcp__Kaggle__download_competition_data_files`) — for
