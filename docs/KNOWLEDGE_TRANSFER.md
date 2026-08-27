@@ -8,7 +8,19 @@ Last updated at commit `c93a2fa` on branch `claude/agent-security-multistep-atta
 (repo `christianmetzl/aiagentsecurity`). Working tree clean, all pushed. **25/25 tests green,
 `verify.py` 13/13.**
 
-> **Latest (c93a2fa):** added `experiments/transfer_dryrun.py` — the offline proxy for the
+> **GROUND TRUTH (2026-08-27, competition data downloaded via Kaggle API — see
+> `COMPETITION_INTEL.md` §0, which SUPERSEDES forum-inferred values):** real
+> **`DEFAULT_BUDGET_S = 8750` per phase** (not 900); real **`max_tool_hops = 8`** (not 4 — the
+> SDK's `run_local` used 4 and understated our local dry-runs ~2×; FORGE reads `config` so it
+> already packs 8 at rerun); **the same candidate list is replayed on BOTH public+private
+> columns** (gateway confirms dual-column → hold-routing is ground-truth-validated, re-checked at
+> hops=8); **generation always uses public Optimal** (private column is pure transfer); the
+> **private `persistent_provenance` guardrail is NOT in the public bundle** — it's a wheel injected
+> at rerun, so it can't be tested offline (our permissive/strict models stay the only proxy); real
+> Optimal+predicates verified (Bug 1, marker-literal-only all confirmed). **No `attack.py` change
+> needed** — it already adapts to the live config and enforces the 32-msg/2000-char hard caps.
+>
+> **Earlier (c93a2fa):** added `experiments/transfer_dryrun.py` — the offline proxy for the
 > competition's public→private candidate-transfer scoring. It generates FORGE's list on the
 > PUBLIC guardrail and replays the SAME list on the public + both `persistent_provenance` private
 > hypotheses. Result across all presets: the list is **perfectly DUAL-COLUMN** (identical score on
@@ -196,17 +208,15 @@ From `aicomp_sdk==3.1.2` (PyPI, MIT; competition ships the same version). See
 ---
 
 ## 7. PENDING / NEXT STEPS (do these in a fresh session)
-1. **Run the real-guardrail check** — the ONE thing the offline work can't do (the real
-   `aicomp_private_guardrails.persistent_provenance` + `kaggle_evaluation` gateway ship only in the
-   Kaggle dataset). Two clean ways, neither needs a working Kaggle MCP:
-   - **(a) In a Kaggle notebook (recommended):** attach the competition data (mounts at
-     `/kaggle/input`), then `python scripts/kaggle_dryrun.py`. That's the natural home for the data.
-   - **(b) In a fresh Claude session:** it picks up the Kaggle connector cleanly →
-     `mcp__Kaggle__download_competition_data_files` (LOCAL only, do NOT commit) → same script.
-   `scripts/kaggle_dryrun.py` imports the REAL private guardrail, replays FORGE's public-generated
-   list on it (via `experiments/transfer_dryrun.py`), and tells you if our modeled permissive/strict
-   bracketed reality. The offline transfer dry-run already shows the list is **DUAL-COLUMN** (same
-   score on public + both private hypotheses), validating **hold-routing** with full-list evidence.
+1. **DONE — competition data downloaded & gateway read (2026-08-27).** The `kaggle_evaluation`
+   gateway + SDK 3.1.2 were read directly; ground truth is in `COMPETITION_INTEL.md` §0 and folded
+   into `attack.py` reasoning (no code change needed) + `transfer_dryrun.py` (now hops=8). **The
+   real private `persistent_provenance` guardrail is NOT in the downloadable data** — it is a wheel
+   injected under `/kaggle/input` ONLY during the private rerun, so it genuinely CANNOT be tested
+   offline. `scripts/kaggle_dryrun.py` still works *inside an actual Kaggle rerun/notebook* if the
+   wheel is ever present, but from downloaded data it will (correctly) report the wheel absent. Our
+   `PersistentProvenance{Permissive,Strict}` models remain the only offline proxy; the dual-column
+   result (same score on public + both private hypotheses, re-verified at hops=8) stands.
 2. **Kaggle MCP** (the current session lost it mid-run; a FRESH session picks it up):
    - Confirm `mcp__Kaggle__*` tools load.
    - **Download the competition data** (`mcp__Kaggle__download_competition_data_files`) — for

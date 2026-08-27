@@ -30,9 +30,14 @@ from aicomp_sdk.attacks import AttackRunConfig  # noqa: E402
 from aicomp_sdk.core.cells import cell_signature  # noqa: E402
 from aicomp_sdk.core.env.opaque import _OpaqueAttackEnv  # noqa: E402
 from aicomp_sdk.core.predicates import eval_predicates  # noqa: E402
-from aicomp_sdk.evaluation.ops import (  # noqa: E402
-    EVALUATION_DEFAULT_MAX_TOOL_HOPS as H,
-)
+from aicomp_sdk.core.env.api import DEFAULT_MAX_TOOL_HOPS  # noqa: E402
+
+# GROUND TRUTH (from the downloaded competition gateway, jed_attack_gateway.py):
+# the real scorer builds every env with max_tool_hops = DEFAULT_MAX_TOOL_HOPS = 8,
+# NOT the SDK's EVALUATION_DEFAULT_MAX_TOOL_HOPS = 4 that run_local() uses. Model the
+# REAL gateway here (8) so the dense route packs the same posts/message it will at rerun.
+# Override with DRYRUN_HOPS for A/B.
+H = int(os.environ.get("DRYRUN_HOPS", str(DEFAULT_MAX_TOOL_HOPS)))
 from aicomp_sdk.evaluation.ops import resolve_fixtures_dir  # noqa: E402
 from aicomp_sdk.scoring import score_attack  # noqa: E402
 
