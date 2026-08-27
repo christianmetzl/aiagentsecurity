@@ -185,7 +185,8 @@ From `aicomp_sdk==3.1.2` (PyPI, MIT; competition ships the same version). See
 ---
 
 ## 7. PENDING / NEXT STEPS (do these in a fresh session)
-1. **Kaggle MCP** (the current session lost it mid-run; a FRESH session picks it up):
+1. **Run `python scripts/kaggle_dryrun.py`** once the competition data is downloaded — it imports the REAL `aicomp_private_guardrails.persistent_provenance`, replays FORGE's public-generated list on it (via `experiments/transfer_dryrun.py`), and tells you if our modeled permissive/strict bracketed reality. Offline transfer dry-run already shows the list is DUAL-COLUMN (same score on public + both private hypotheses), validating hold-routing.
+2. **Kaggle MCP** (the current session lost it mid-run; a FRESH session picks it up):
    - Confirm `mcp__Kaggle__*` tools load.
    - **Download the competition data** (`mcp__Kaggle__download_competition_data_files`) — for
      LOCAL analysis only, do NOT commit/redistribute. Inspect `kaggle_evaluation/jed_attack_*`:
