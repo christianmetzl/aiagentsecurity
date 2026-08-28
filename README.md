@@ -42,7 +42,7 @@ overrun** (which would zero the run).
 pip install -r requirements-dev.txt      # aicomp_sdk (PyPI) + gymnasium + pydantic + pytest
 python verify.py                          # -> 13/13 PASS, offline, ~2 min
 python -m harness.local_eval --agent compliant --guardrail optimal --budget 60
-python -m pytest -q                       # -> 17 passed
+python -m pytest -q                       # -> 25 passed
 ```
 
 `python -m harness.local_eval --help` lists agents (`compliant|stubborn|slow|null|
@@ -67,9 +67,12 @@ from the scoring code drive FORGE (full details in
    manufactures diversity cheaply, while severity is stacked by requesting several posts
    in one interaction.
 
-FORGE runs: **probe** routes under the live guardrail → **diversify** the confirmed ones
-across distinct destinations, weighted by measured raw-per-hop → **cap** the returned
-list to a provably-safe replay size → validate and return.
+FORGE runs: **probe** routes under the live guardrail → **density-pack** the best confirmed
+exfil route (adaptive bang-bang: many posts stacked per candidate on a fast target, wide fallback
+on a slow one) → **diversify** across distinct destinations, weighted by measured raw-per-hop →
+add a **split-portfolio** of private-column routes (pure untrusted→action + whitelisted-domain
+deputy candidates), interleaving a reserved fraction of the scored prefix for them since the private
+leaderboard likely decides the rank → **cap** to a provably-safe replay size → validate and return.
 
 ## To submit
 

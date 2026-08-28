@@ -46,7 +46,7 @@ from harness import local_eval as LE  # noqa: E402
 FX = resolve_fixtures_dir(None)
 # The private-guardrail hypotheses to replay the public list against.
 COLUMNS = ["optimal", "persistent_provenance", "persistent_provenance_strict",
-           "persistent_provenance_allargs"]
+           "persistent_provenance_allargs", "persistent_provenance_conjunctive"]
 SCORED_PREFIX = 250  # the real eval scores only the first ~200-250 candidates
 
 

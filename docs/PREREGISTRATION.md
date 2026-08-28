@@ -17,6 +17,10 @@ honestly is evidence the method and its limits are understood.
 * the four predicate triggers and the score-cell definition;
 * the public `OptimalGuardrail` decision rule and the `guardrail_rules` baseline;
 * the budget/shape limits (2000 candidates, 32 msgs, 2000 chars, 4 hops, greedy).
+  <br>*(Footnote, added 2026-08-28 after downloading the gateway: the SDK's `run_local`/`ops.py`
+  uses 4 hops, which is what this frozen line traces; the REAL competition gateway
+  (`jed_attack_gateway.py`) uses `DEFAULT_MAX_TOOL_HOPS = 8` and a per-phase budget of 8750 s.
+  This registration line is left as frozen; the correction is tracked in `CLAIMS_LEDGER.md` C20.)*
 
 **Guardrails frozen for the private leaderboard prediction:** the private guardrail is
 unknown; predictions that mention it assume it is *behaviourally similar to*

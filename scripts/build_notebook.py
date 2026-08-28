@@ -56,10 +56,10 @@ from pathlib import Path
 # Select the FORGE build preset (see attack.py _Config._BUILD_PRESETS). Set BEFORE the
 # server imports/loads attack.py so _Config reads it.
 os.environ.setdefault("FORGE_BUILD", "__BUILD__")
-# Private-column coverage: ON appends an UNTRUSTED_TO_ACTION tail to each candidate so it
-# scores on a pattern-style private guardrail (where a pure SECRET_MARKER sentinel is blocked);
-# OFF maximises public/taint-style-private throughput. See docs/COMPETITION_INTEL.md §0.1.
-os.environ.setdefault("FORGE_COMBINE_TAIL", "__TAIL__")
+# Private-column coverage: fraction of the scored prefix reserved for the split-portfolio's
+# private routes (untrusted->action + whitelisted-domain deputy). ~0.30 is the private-robust
+# default; the public_max hedge lowers it to bet the public column also counts. See §0.1.
+os.environ.setdefault("FORGE_PRIVATE_FRACTION", "__PF__")
 
 sys.argv = [sys.argv[0]]
 
@@ -98,8 +98,8 @@ RUN = '''# Serve the gateway. On the competition rerun this connects to the exte
 '''
 
 
-def build_nb(build: str, combine_tail: bool = True) -> dict:
-    launch = LAUNCH.replace("__BUILD__", build).replace("__TAIL__", "1" if combine_tail else "0")
+def build_nb(build: str, private_fraction: float = 0.30) -> dict:
+    launch = LAUNCH.replace("__BUILD__", build).replace("__PF__", f"{private_fraction:g}")
     return {
         "cells": [
             md_cell(intro(build)),
@@ -118,22 +118,21 @@ def build_nb(build: str, combine_tail: bool = True) -> dict:
 
 def main() -> None:
     outdir = REPO / "notebook"
-    # (filename, build, combine_tail). The two-slot hedge brackets the unresolved
-    # "does public also count / is the private guardrail taint- or pattern-style" question:
-    #   *_robust / *_aggressive (tail ON)  — private-column-robust (bet: private decides and is
-    #                                        pattern-style; a pure sentinel scores 0 there).
-    #   *_public_max (tail OFF)            — max public + taint-style-private via the sentinel
-    #                                        (bet: public also counts, or private is taint-style).
+    # (filename, build, private_fraction). All builds ship the SPLIT PORTFOLIO; the two-slot hedge
+    # brackets the unresolved "does public also count" question via how much of the scored prefix is
+    # reserved for private-column routes:
+    #   *_robust / *_aggressive / default (pf=0.30) — private-column-robust (bet: private decides).
+    #   *_public_max            (pf=0.05)           — public-leaning (bet: public also counts).
     targets = [
-        ("forge_submission.ipynb", "balanced", True),
-        ("forge_submission_robust.ipynb", "robust", True),
-        ("forge_submission_aggressive.ipynb", "aggressive", True),
-        ("forge_submission_public_max.ipynb", "aggressive", False),
+        ("forge_submission.ipynb", "balanced", 0.30),
+        ("forge_submission_robust.ipynb", "robust", 0.30),
+        ("forge_submission_aggressive.ipynb", "aggressive", 0.30),
+        ("forge_submission_public_max.ipynb", "aggressive", 0.05),
     ]
-    for fname, build, tail in targets:
+    for fname, build, pf in targets:
         out = outdir / fname
-        out.write_text(json.dumps(build_nb(build, tail), indent=1))
-        print(f"wrote {out.relative_to(REPO)} (build={build}, tail={'on' if tail else 'off'}, "
+        out.write_text(json.dumps(build_nb(build, pf), indent=1))
+        print(f"wrote {out.relative_to(REPO)} (build={build}, private_fraction={pf}, "
               f"{out.stat().st_size} bytes)")
 
 

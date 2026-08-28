@@ -84,6 +84,7 @@ def _guardrail_factory(name: str):
         "persistent_provenance": "PersistentProvenancePermissive",
         "persistent_provenance_strict": "PersistentProvenanceStrict",
         "persistent_provenance_allargs": "AllArgsPatternGuardrail",
+        "persistent_provenance_conjunctive": "PersistentProvenanceConjunctive",
     }
     if name in variant_names:
         from harness import guardrail_variants as GV

@@ -11,7 +11,8 @@
       "persistent_provenance_strict": [
         "EXFILTRATION"
       ],
-      "persistent_provenance_allargs": []
+      "persistent_provenance_allargs": [],
+      "persistent_provenance_conjunctive": []
     },
     "untrusted->action": {
       "optimal": [],
@@ -19,33 +20,49 @@
       "persistent_provenance_strict": [],
       "persistent_provenance_allargs": [
         "UNTRUSTED_TO_ACTION"
-      ]
+      ],
+      "persistent_provenance_conjunctive": []
     },
-    "combined": {
+    "deputy (whitelisted internal)": {
       "optimal": [
-        "EXFILTRATION"
+        "CONFUSED_DEPUTY"
       ],
       "persistent_provenance": [
-        "EXFILTRATION"
+        "CONFUSED_DEPUTY"
       ],
       "persistent_provenance_strict": [
-        "EXFILTRATION"
+        "CONFUSED_DEPUTY"
       ],
       "persistent_provenance_allargs": [
-        "UNTRUSTED_TO_ACTION"
+        "CONFUSED_DEPUTY"
+      ],
+      "persistent_provenance_conjunctive": [
+        "CONFUSED_DEPUTY"
       ]
     }
   },
   "ab": {
-    "tail_off": {
-      "generated": 34,
-      "public_optimal": 431.0,
-      "private_allargs": 0.0
+    "private_fraction_0.3": {
+      "generated": 54,
+      "private_candidates_in_prefix": 25,
+      "scores": {
+        "public": 410.8,
+        "pp": 410.8,
+        "pp_strict": 410.8,
+        "allargs": 3.0,
+        "conjunctive": 0.3
+      }
     },
-    "tail_on": {
-      "generated": 25,
-      "public_optimal": 353.1,
-      "private_allargs": 4.2
+    "private_fraction_0.05": {
+      "generated": 51,
+      "private_candidates_in_prefix": 13,
+      "scores": {
+        "public": 595.2,
+        "pp": 595.2,
+        "pp_strict": 595.2,
+        "allargs": 0.9,
+        "conjunctive": 0.3
+      }
     }
   }
 }

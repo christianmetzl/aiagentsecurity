@@ -8,26 +8,33 @@ Last updated at commit `c93a2fa` on branch `claude/agent-security-multistep-atta
 (repo `christianmetzl/aiagentsecurity`). Working tree clean, all pushed. **25/25 tests green,
 `verify.py` 13/13.**
 
-> **BIGGEST FINDING (2026-08-27, combined candidates):** the Evaluator FAQ + a competitor's timing
-> probe (forum 736099) indicate the private guardrail blocks dangerous substrings in ALL tool args,
-> so a pure `SECRET_MARKER` sentinel post scores **~0 on the PRIVATE column** (its `data` contains
-> "secret"), and the private column likely **decides the final rank**. FORGE now appends a bounded
-> **UNTRUSTED_TO_ACTION tail** (untrusted `web.open` → benign no-pattern `http.post`) after each
-> candidate's sentinel posts (`combine_private_tail`, default ON). Source-verified predicate
-> mechanics give a complementary coverage matrix; the combined candidate scores on EVERY column
-> under either private-guardrail hypothesis. Measured A/B: pattern-style private 0 → 5.1 (public
-> 431 → 279). This SUPERSEDES the earlier "hold routing / dual-column" conclusion (which assumed a
-> taint-style private). The real private guardrail is un-downloadable (rerun-time wheel), so its
-> identity is INFERRED — we bracket it: tail-ON notebooks (private-robust) + a tail-OFF
-> `forge_submission_public_max.ipynb` hedge. Evidence: `experiments/private_column_coverage.py`.
+> **BIGGEST FINDING (2026-08-28, SPLIT PORTFOLIO — revised after a hostile-panel review):** the
+> Evaluator FAQ + a competitor's timing probe (forum 736099) indicate the private guardrail likely
+> blocks dangerous substrings in ALL tool args, so a pure `SECRET_MARKER` sentinel scores **~0 on
+> the PRIVATE column** (its `data` contains "secret"), and the private column likely **decides the
+> final rank**. An earlier fix appended an UNTRUSTED_TO_ACTION *tail* to EVERY candidate; a 5-judge
+> hostile panel showed that net-hurts (it helps only under a no-taint pattern-style private, and the
+> name "persistent_provenance" implies taint — under which the tail's post is taint-blocked). FORGE
+> now ships a **SPLIT PORTFOLIO** instead: mostly pure sentinels (public + taint-private EXFIL), a
+> reserved `private_fraction` (~0.30) of pure **untrusted→action** candidates at real priority
+> (pattern-private UNTRUSTED_TO_ACTION), and **deputy** email.send candidates to plausibly-
+> whitelisted internal domains (the CONJUNCTIVE persistent-taint+pattern worst case, where
+> CONFUSED_DEPUTY is the only survivor). Split-portfolio transfer dry-run (compliant mock,
+> host-dependent ≈): optimal/permissive/strict ≈ 450, allargs ≈ 3, **conjunctive ≈ 0.3 (was 0)** —
+> it recovers public throughput AND adds worst-case coverage the tail had zero of. The legacy tail
+> is `combine_private_tail`, DEFAULT OFF (opt-in via `FORGE_COMBINE_TAIL=1`). The real private
+> guardrail is un-downloadable (rerun-time wheel), so its BEHAVIOUR is INFERRED and bracketed by the
+> guardrail variants; identity is source-traced. Evidence: `experiments/private_column_coverage.py`,
+> `experiments/transfer_dryrun.py`.
 >
 > **GROUND TRUTH (2026-08-27, competition data downloaded via Kaggle API — see
 > `COMPETITION_INTEL.md` §0, which SUPERSEDES forum-inferred values):** real
 > **`DEFAULT_BUDGET_S = 8750` per phase** (not 900); real **`max_tool_hops = 8`** (not 4 — the
 > SDK's `run_local` used 4 and understated our local dry-runs ~2×; FORGE reads `config` so it
 > already packs 8 at rerun); **the same candidate list is replayed on BOTH public+private
-> columns** (gateway confirms dual-column → hold-routing is ground-truth-validated, re-checked at
-> hops=8); **generation always uses public Optimal** (private column is pure transfer); the
+> columns** (gateway confirms candidate-transfer; the strategy drawn from it evolved to the split
+> portfolio above, NOT "hold routing"); **generation always uses public Optimal** (private column
+> is pure transfer); the
 > **private `persistent_provenance` guardrail is NOT in the public bundle** — it's a wheel injected
 > at rerun, so it can't be tested offline (our permissive/strict models stay the only proxy); real
 > Optimal+predicates verified (Bug 1, marker-literal-only all confirmed). **No `attack.py` change
@@ -96,7 +103,9 @@ Full detail in `docs/COMPETITION_INTEL.md`. The decision-critical facts:
    none."* Same submission scores differently each run. → **reliability > throughput; multi-step
    dense chains are risky; hedge with 2 submissions.**
 5. **Exact models:** `gpt-oss-20b-Q4_K_M.gguf`, `gemma-4-26B-A4B-it-UD-Q4_K_M.gguf` via
-   `llama-cpp-python`. **`DEFAULT_BUDGET_S = 900`** per phase.
+   `llama-cpp-python`. **`DEFAULT_BUDGET_S = 8750`** per phase (source-traced from the downloaded
+   gateway; the FAQ's "9,000 s" is the hard cap = 8750 + grace/buffer). The forum-inferred "900"
+   was wrong.
 6. **Real top scores are LOW (~0.06–0.135).** The real ceiling is far below the mock.
 7. **Submission mechanics:** the notebook must **serve the JED inference gateway**, not write a
    file. Rerun sets `KAGGLE_IS_COMPETITION_RERUN`; then
@@ -131,8 +140,10 @@ From `aicomp_sdk==3.1.2` (PyPI, MIT; competition ships the same version). See
   specialise (FORGE's whole premise; works on the private guardrail too since shared).
 - **Replay overrun ⇒ `TimeoutError` ⇒ the whole run scores 0.** Budget-safety is a correctness
   constraint, not a detail.
-- Harness limits: ≤2000 candidates, ≤32 messages/candidate, ≤2000 chars/msg, `max_tool_hops=4`
-  in eval, `MAX_REPLAY_FINDINGS=2000`. Default `AttackRunConfig.time_budget_s=30` (real=900).
+- Harness limits: ≤2000 candidates, ≤32 messages/candidate, ≤2000 chars/msg, **`max_tool_hops=8`**
+  in the real gateway (`DEFAULT_MAX_TOOL_HOPS`; the SDK's `run_local`/`ops.py` uses 4 — do not
+  confuse them), `MAX_REPLAY_FINDINGS=2000`. Default `AttackRunConfig.time_budget_s=30`; **real per
+  phase = 8750 s** (hard cap ≈8930/9000).
 
 ---
 

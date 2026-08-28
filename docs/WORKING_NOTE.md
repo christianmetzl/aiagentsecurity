@@ -578,7 +578,7 @@ lessons in §6 are the point. All code is MIT-licensed and reproducible offline.
 pip install -r requirements-dev.txt          # aicomp_sdk + gymnasium + pydantic + pytest
 python verify.py                              # 13/13 assertions, offline, no GPU
 python -m harness.local_eval --agent compliant --guardrail optimal --budget 60
-python -m pytest -q                           # 17 tests
+python -m pytest -q                           # 25 tests
 python scripts/build_notebook.py              # regenerate the Kaggle submission notebook
 ```
 
