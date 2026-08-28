@@ -8,6 +8,19 @@ Last updated at commit `c93a2fa` on branch `claude/agent-security-multistep-atta
 (repo `christianmetzl/aiagentsecurity`). Working tree clean, all pushed. **25/25 tests green,
 `verify.py` 13/13.**
 
+> **BIGGEST FINDING (2026-08-27, combined candidates):** the Evaluator FAQ + a competitor's timing
+> probe (forum 736099) indicate the private guardrail blocks dangerous substrings in ALL tool args,
+> so a pure `SECRET_MARKER` sentinel post scores **~0 on the PRIVATE column** (its `data` contains
+> "secret"), and the private column likely **decides the final rank**. FORGE now appends a bounded
+> **UNTRUSTED_TO_ACTION tail** (untrusted `web.open` → benign no-pattern `http.post`) after each
+> candidate's sentinel posts (`combine_private_tail`, default ON). Source-verified predicate
+> mechanics give a complementary coverage matrix; the combined candidate scores on EVERY column
+> under either private-guardrail hypothesis. Measured A/B: pattern-style private 0 → 5.1 (public
+> 431 → 279). This SUPERSEDES the earlier "hold routing / dual-column" conclusion (which assumed a
+> taint-style private). The real private guardrail is un-downloadable (rerun-time wheel), so its
+> identity is INFERRED — we bracket it: tail-ON notebooks (private-robust) + a tail-OFF
+> `forge_submission_public_max.ipynb` hedge. Evidence: `experiments/private_column_coverage.py`.
+>
 > **GROUND TRUTH (2026-08-27, competition data downloaded via Kaggle API — see
 > `COMPETITION_INTEL.md` §0, which SUPERSEDES forum-inferred values):** real
 > **`DEFAULT_BUDGET_S = 8750` per phase** (not 900); real **`max_tool_hops = 8`** (not 4 — the

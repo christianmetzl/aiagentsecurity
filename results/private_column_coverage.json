@@ -1,0 +1,51 @@
+{
+  "hops": 8,
+  "coverage_matrix": {
+    "sentinel": {
+      "optimal": [
+        "EXFILTRATION"
+      ],
+      "persistent_provenance": [
+        "EXFILTRATION"
+      ],
+      "persistent_provenance_strict": [
+        "EXFILTRATION"
+      ],
+      "persistent_provenance_allargs": []
+    },
+    "untrusted->action": {
+      "optimal": [],
+      "persistent_provenance": [],
+      "persistent_provenance_strict": [],
+      "persistent_provenance_allargs": [
+        "UNTRUSTED_TO_ACTION"
+      ]
+    },
+    "combined": {
+      "optimal": [
+        "EXFILTRATION"
+      ],
+      "persistent_provenance": [
+        "EXFILTRATION"
+      ],
+      "persistent_provenance_strict": [
+        "EXFILTRATION"
+      ],
+      "persistent_provenance_allargs": [
+        "UNTRUSTED_TO_ACTION"
+      ]
+    }
+  },
+  "ab": {
+    "tail_off": {
+      "generated": 34,
+      "public_optimal": 431.0,
+      "private_allargs": 0.0
+    },
+    "tail_on": {
+      "generated": 25,
+      "public_optimal": 353.1,
+      "private_allargs": 4.2
+    }
+  }
+}

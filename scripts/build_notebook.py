@@ -56,6 +56,10 @@ from pathlib import Path
 # Select the FORGE build preset (see attack.py _Config._BUILD_PRESETS). Set BEFORE the
 # server imports/loads attack.py so _Config reads it.
 os.environ.setdefault("FORGE_BUILD", "__BUILD__")
+# Private-column coverage: ON appends an UNTRUSTED_TO_ACTION tail to each candidate so it
+# scores on a pattern-style private guardrail (where a pure SECRET_MARKER sentinel is blocked);
+# OFF maximises public/taint-style-private throughput. See docs/COMPETITION_INTEL.md §0.1.
+os.environ.setdefault("FORGE_COMBINE_TAIL", "__TAIL__")
 
 sys.argv = [sys.argv[0]]
 
@@ -94,12 +98,13 @@ RUN = '''# Serve the gateway. On the competition rerun this connects to the exte
 '''
 
 
-def build_nb(build: str) -> dict:
+def build_nb(build: str, combine_tail: bool = True) -> dict:
+    launch = LAUNCH.replace("__BUILD__", build).replace("__TAIL__", "1" if combine_tail else "0")
     return {
         "cells": [
             md_cell(intro(build)),
             code_cell("%%writefile attack.py\n" + ATTACK),
-            code_cell(LAUNCH.replace("__BUILD__", build)),
+            code_cell(launch),
             code_cell(SMOKE),
             code_cell(RUN),
         ],
@@ -113,15 +118,23 @@ def build_nb(build: str) -> dict:
 
 def main() -> None:
     outdir = REPO / "notebook"
-    targets = {
-        "forge_submission.ipynb": "balanced",
-        "forge_submission_robust.ipynb": "robust",
-        "forge_submission_aggressive.ipynb": "aggressive",
-    }
-    for fname, build in targets.items():
+    # (filename, build, combine_tail). The two-slot hedge brackets the unresolved
+    # "does public also count / is the private guardrail taint- or pattern-style" question:
+    #   *_robust / *_aggressive (tail ON)  — private-column-robust (bet: private decides and is
+    #                                        pattern-style; a pure sentinel scores 0 there).
+    #   *_public_max (tail OFF)            — max public + taint-style-private via the sentinel
+    #                                        (bet: public also counts, or private is taint-style).
+    targets = [
+        ("forge_submission.ipynb", "balanced", True),
+        ("forge_submission_robust.ipynb", "robust", True),
+        ("forge_submission_aggressive.ipynb", "aggressive", True),
+        ("forge_submission_public_max.ipynb", "aggressive", False),
+    ]
+    for fname, build, tail in targets:
         out = outdir / fname
-        out.write_text(json.dumps(build_nb(build), indent=1))
-        print(f"wrote {out.relative_to(REPO)} (build={build}, {out.stat().st_size} bytes)")
+        out.write_text(json.dumps(build_nb(build, tail), indent=1))
+        print(f"wrote {out.relative_to(REPO)} (build={build}, tail={'on' if tail else 'off'}, "
+              f"{out.stat().st_size} bytes)")
 
 
 if __name__ == "__main__":
