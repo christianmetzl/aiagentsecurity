@@ -142,6 +142,11 @@ def main() -> None:
         # both guarantees a score and isolates the private-coverage lever.
         ("forge_submission_robust_pf05.ipynb", "robust", 0.05),
         ("forge_submission_robust_pf45.ipynb", "robust", 0.45),
+        # Complete the private_fraction sweep on the (reliable, non-dense) robust build. Dense
+        # builds (balanced/aggressive) errored on the real eval, so all go-forward variants are
+        # robust; we vary only how much of the scored prefix is reserved for the private routes.
+        ("forge_submission_robust_pf15.ipynb", "robust", 0.15),
+        ("forge_submission_robust_pf60.ipynb", "robust", 0.60),
     ]
     for fname, build, pf in targets:
         out = outdir / fname
