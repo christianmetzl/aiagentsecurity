@@ -77,10 +77,19 @@ import kaggle_evaluation.jed_attack_{COMP_ID}.jed_attack_inference_server as att
 if os.getenv("KAGGLE_IS_COMPETITION_RERUN"):
     # Competition scoring: the external JED gateway connects and drives our attack.py.
     attack_srv.JEDAttackInferenceServer().serve()
-else:
-    # Interactive/local validation (requires the model + wheelhouse datasets; see the
-    # "confirmation of exact model and CPU or GPU" discussion thread for the CPU recipe).
+elif os.getenv("FORGE_LOCAL_GATEWAY"):
+    # OPT-IN local validation only -- requires the model GGUF datasets attached (see the
+    # "confirmation of exact model and CPU or GPU" thread for the CPU llama-cpp recipe).
     attack_srv.JEDAttackInferenceServer().run_local_gateway()
+else:
+    # Plain commit run (Save & Run All): do NOT drive the local gateway -- it needs the models,
+    # and this would error/hang and block the commit. attack.py is already written and compiled
+    # by the smoke cell; that is all the commit needs. The scored SUBMIT rerun sets
+    # KAGGLE_IS_COMPETITION_RERUN and serves the gateway above. Attach the model datasets and set
+    # FORGE_LOCAL_GATEWAY=1 if you want to run a full local validation here.
+    print("Commit run OK: attack.py + launch.py written; attack.py compiles. "
+          "Submit this version -- the scored rerun will serve the gateway. "
+          "(Set FORGE_LOCAL_GATEWAY=1 with model datasets attached for local validation.)")
 """
 
 

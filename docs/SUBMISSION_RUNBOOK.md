@@ -51,8 +51,12 @@ you know the eval finishes in time (dense = longer per-candidate replay → time
    submission (those are only needed for *local* CPU validation — see the forum "exact model / CPU"
    thread). Confirm on the competition's data/submit instructions.
 3. **Save Version → Save & Run All (Commit)**. The commit run is *not* the scored run — it just has
-   to complete without a code error. (`KAGGLE_IS_COMPETITION_RERUN` is unset here, so the notebook's
-   `launch.py` takes the local branch and the offline smoke cell compiles `attack.py`.)
+   to complete without a code error, and it now does so **without needing the models attached**:
+   `launch.py` is guarded so that when `KAGGLE_IS_COMPETITION_RERUN` is unset it only writes
+   `attack.py`, compiles it, and prints "Commit run OK" — it does **not** drive the local gateway
+   (which would need the GGUF models and could hang/error). So a plain commit passes fast on any
+   kernel. (To run a real local validation, attach the model datasets and set
+   `FORGE_LOCAL_GATEWAY=1`.)
 4. Once the version is saved, open it and click **Submit to Competition**. The hidden scoring rerun
    sets `KAGGLE_IS_COMPETITION_RERUN`, serves the gateway, and drives our `attack.py`.
 5. Scoring is **slow** — expect **hours** (competitors report 2–20 h; the run has a 15 h cap). Don't
