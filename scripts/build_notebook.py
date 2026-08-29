@@ -137,6 +137,11 @@ def main() -> None:
         ("forge_submission_robust.ipynb", "robust", 0.30),
         ("forge_submission_aggressive.ipynb", "aggressive", 0.30),
         ("forge_submission_public_max.ipynb", "aggressive", 0.05),
+        # Extra robust variants for a same-day 5-slot parallel slate: a clean private_fraction
+        # sweep {0.05, 0.30, 0.45} on the SAFE (low-timeout-risk) robust build so the first batch
+        # both guarantees a score and isolates the private-coverage lever.
+        ("forge_submission_robust_pf05.ipynb", "robust", 0.05),
+        ("forge_submission_robust_pf45.ipynb", "robust", 0.45),
     ]
     for fname, build, pf in targets:
         out = outdir / fname
