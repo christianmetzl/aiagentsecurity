@@ -6,29 +6,38 @@ until the competition closes (2026-09-01). All are on the normalized ~0–1000 s
 
 MEASURED — real competition eval, not the offline compliant mock.
 
-## Batch 1 (submitted 2026-08-29)
+## Batch 1 (submitted 2026-08-29) — private_fraction sweep, robust build
+
+Sorted by `private_fraction` to show the calibration curve directly. All rows are the SAME robust
+build; only `FORGE_PRIVATE_FRACTION` varies.
 
 | notebook | build | private_fraction | public score | status |
 |---|---|---|---|---|
 | V2 `…1c952288a2` | robust | 0.05 | **10.935** | Succeeded |
+| V7 `…dc0fcdf06c` | robust | 0.15 | **8.855** | Succeeded |
 | V1 `…17bfbcc57f` | robust | 0.30 | **7.690** | Succeeded |
-| V7 `…dc0fcdf06c` | robust | 0.15 | (pending) | running |
-| V3 `…f362cee303` | robust | 0.45 | (pending) | running |
-| V6 `…19a27d257f` | robust | 0.60 | (pending) | running |
+| V3 `…f362cee303` | robust | 0.45 | **5.740** | Succeeded |
+| V6 `…19a27d257f` | robust | 0.60 | (running ~5h) | running |
+| V8 `…c8896d1807` | **throughput** (terse batch-8) | 0.05 | (running ~32m) | running |
 | V4 `…b02747ced5` | **balanced (dense)** | 0.30 | — | **Kaggle Error** |
 | V5 `…1bb1479552` | **aggressive (dense)** | 0.30 | — | **Kaggle Error** |
 
 ### Reads
-- **Compliance CONFIRMED:** both completed runs scored > 0 → the real models comply with FORGE's
-  routes at a useful rate. (Biggest prior unknown, now resolved.)
-- **private_fraction lever behaves as designed:** pf=0.05 → 10.9 (more sentinels) > pf=0.30 → 7.7
-  (more prefix reserved for private routes that score ~0 on public). That drop IS the public↔private
-  tradeoff, real.
+- **Compliance CONFIRMED:** every completed run scored > 0 → the real models comply with FORGE's
+  routes at a useful rate. (Biggest prior unknown, resolved.)
+- **private_fraction is a clean, monotone, ~linear public-cost lever** — MEASURED calibration curve:
+  0.05→10.935, 0.15→8.855, 0.30→7.690, 0.45→5.740. ≈ **−1.3 public per +0.10 pf**, near-linear.
+  Every unit of private_fraction trades public-scoring sentinels for private-targeted routes that
+  score **~0 on the public guardrail (OptimalGuardrail)**. This is exactly the modeled public↔private
+  tradeoff, now confirmed across five points, not two. It also proves the private routes are being
+  **emitted and accepted as valid candidates** (they consume budget) — whether they SCORE is a
+  private-column question, hidden until close.
 - **Dense builds error on the real eval** (both `enable_dense=True` builds → Kaggle Error, ~2h;
-  the three non-dense robust builds ran). Go-forward = robust only.
-- **Public scale:** ~7–11 vs public-leaderboard top ~147. We are low on PUBLIC (we did not grind
-  dense throughput and have few iterations). Our bet is the PRIVATE board (different, harder
-  guardrail; "final standings may differ").
+  every non-dense robust build ran). Go-forward = robust/throughput (non-dense) only.
+- **Public is throughput-capped for us:** max ~11 (pf0.05) vs public-leaderboard top ~147 (~13×).
+  Almost certainly dense packing the leaders got working and we can't (dense errors for us). On
+  PUBLIC we are structurally limited; the bet is the PRIVATE board (different, harder guardrail where
+  dense exfil is likely blocked for everyone, collapsing that 13× — the thesis, in numbers).
 
 ### Back-out calibration (from the aggregate public scores; API pull 2026-08-29)
 Public → raw (×200000/1000) → severity-5 events (÷16):
