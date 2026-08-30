@@ -150,6 +150,11 @@ def main() -> None:
         # THROUGHPUT experiment: single-message batch_size=8 (no multi-message dense → no OOM) +
         # authoritative system-channel framings, public-focused, to test the real public ceiling.
         ("forge_submission_throughput.ipynb", "throughput", 0.05),
+        # COMPLIANCE experiment: adds Crescendo (multi-turn escalation) + many-shot (in-context
+        # priming) as their own probed EXFILTRATION routes on top of the role-play/terse framings.
+        # Non-dense, public-focused (pf=0.05) so any real-model compliance lift shows up directly
+        # against the pf0.05 robust baseline (V2 = 10.935). Both levers are literature-derived.
+        ("forge_submission_crescendo.ipynb", "crescendo", 0.05),
     ]
     for fname, build, pf in targets:
         out = outdir / fname
