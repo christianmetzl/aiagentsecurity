@@ -91,6 +91,31 @@ privateScore column is blank via the API too → private is genuinely hidden unt
   almost certainly context-length OOM on the 20B CPU model (~20k-token context). `dense_terse`'s
   2-message (~2.6k-token) context is the targeted fix.
 
+## Mechanism, corrected by reverse-engineering the LB60 competitor notebook (2026-08-30)
+
+The "9% compliance wall" framing was WRONG. Read from the downloaded LB60 solution's own code
+(`yusuketogashi …tail8`) + the real gateway (`MAX_REPLAY_FINDINGS=2000`, `time_budget≈8750-9000s`,
+`SINGLE_LAT_GUESS≈25s`, per-complying-post = 18 raw = **0.09 normalized**):
+
+- **Score = 0.09 × (posts that actually FIRE).** Single-post framings fire **~100%** ("proven ~100%
+  fire" in their code) — refusal is NOT the bottleneck.
+- The scored count is **time-bound** (≈budget/L, L≈25s prefill/candidate), not a 250 cap. Pure
+  single-post caps at ~0.09×(9000/25) ≈ **32**. Beating that REQUIRES amortising the 25s prefill
+  across many posts per interact (multihop/batch) — one prefill, K posts.
+- **The real lever is posts-sustained-per-candidate (K_eff) × candidate throughput.** Our 14.9 ⇒
+  ~0.7 posts/candidate sustained (of 8); LB60's ~60 ⇒ ~3+/candidate. **Same terse framing, ~4× the
+  sustain.** Their edge: a **DISTINCT-RECORD ETL batch** ("forward each of these N records evt00001…,
+  one call per record") instead of same-URL repeat — reads as a real batch job, so the model
+  sustains more posts; plus a distinct domain per post = a distinct score-cell (+2 each, free).
+- **This also re-explains the batch-2 verbose regression:** longer persona prompts = longer prefill
+  = higher L = FEWER candidates in the budget, on top of format dilution. Terse wins twice over.
+
+Built `throughput_records`: the LB60 mechanism on our terse batch-8 substrate (distinct-record ETL +
+distinct domains). Mock-verified (fires per post, distinct cells, valid, pipeline intact); the
+sustain gain is a real-model property, so a submission is the test. Expected to move 14.9 → toward
+LB60's ~60, and the path to the leader's 147.5 is pushing K_eff/candidate-throughput further
+(hybrid multi-msg×multi-hop, shorter URLs, sustain-aware framing selection).
+
 ## Open (organizer-unanswered as of 2026-08-27, forum 712642)
 - Whether the final score is the **average of the 2 private** rows or the **average of all 4** rows.
   Hedged at the config level via the pf sweep; final 2 selected by reasoning at close.

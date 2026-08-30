@@ -183,6 +183,9 @@ def main() -> None:
         # FORGERY_TERSE: clean test of the structural-forgery compliance wildcard (no verbose
         # framings, which regressed). The one lever that could still raise compliance.
         ("forge_submission_forgery_terse.ipynb", "forgery_terse", 0.05),
+        # THROUGHPUT_RECORDS: the LB60 mechanism (distinct-record ETL batch) reverse-engineered
+        # from their code -- raises posts-sustained/candidate (~9%->~37%). Highest-value public build.
+        ("forge_submission_throughput_records.ipynb", "throughput_records", 0.05),
     ]
     for fname, build, pf in targets:
         out = outdir / fname
