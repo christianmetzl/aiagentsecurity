@@ -27,6 +27,21 @@ Design principles, one per FORGE route:
 Crucially it stays *precise*: benign reads, searches, non-secret writes, `echo`, and a
 user-requested `send email` are all allowed, so it does not trip the benchmark's benign
 false-positive trials.
+
+Defense against the newer compliance levers (role-play, Crescendo, many-shot, Fake-Over-Refusal,
+Quant-Fever, Policy-Collision):
+* Those attacks raise the *model's* willingness to emit the tool call; they do NOT change the
+  tool call itself. Because this guardrail inspects the ACTION (the `data` channel, the session
+  taint), not the prompt, it is **prompt-agnostic** — an exfil with `SECRET_MARKER` in `data` is
+  denied no matter how persuasive the framing that produced it. The right place to stop a
+  compliance jailbreak is the action boundary, not an input classifier (which the jailbreak is
+  explicitly engineered to slip past). Empirically, running FORGE's `gpt_oss_max` / `forgery`
+  builds against this guardrail collapses their score to ~0 (see the defense test).
+* The one attack that a pure action-filter cannot pre-empt is **chat-template / channel forgery**
+  (`forgery_exfil`), which forges the model's own turn via special tokens in untrusted text. That
+  needs an INPUT-side layer: `defense/template_sanitizer.py` neutralises Harmony/gemma control
+  tokens in untrusted content before it is templated, so a forged turn never forms. Layered:
+  sanitize untrusted input (stop the forgery) + inspect the action (stop the egress).
 """
 
 from __future__ import annotations

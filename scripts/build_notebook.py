@@ -168,6 +168,12 @@ def main() -> None:
         # The final score is the PRIVATE column, so this deploys our best substrate with real
         # private-route coverage (the pf lever is orthogonal to the batch substrate).
         ("forge_submission_throughput_pf30.ipynb", "throughput", 0.30),
+        # GPT_OSS_MAX: batch-8 + framings MEASURED on gpt-oss-20b (Fake Over-Refusal, Quant Fever,
+        # Policy Collision, refusal-suppression). Highest-confidence NEW compliance build.
+        ("forge_submission_gpt_oss_max.ipynb", "gpt_oss_max", 0.05),
+        # FORGERY: speculative high-ceiling bet — forged Harmony/gemma chat-template turns
+        # (reported ~91% / ~90.6% ASR). Degrades to plain requests if special tokens are escaped.
+        ("forge_submission_forgery.ipynb", "forgery", 0.05),
     ]
     for fname, build, pf in targets:
         out = outdir / fname
