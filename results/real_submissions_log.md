@@ -91,6 +91,27 @@ privateScore column is blank via the API too → private is genuinely hidden unt
   almost certainly context-length OOM on the 20B CPU model (~20k-token context). `dense_terse`'s
   2-message (~2.6k-token) context is the targeted fix.
 
+## MEASURED NEGATIVE: the innovations regressed vs plain terse batch-8 (2026-08-31)
+
+Honest, per the verification discipline — report the miss with the hits.
+
+| build | what it adds over terse batch-8 | public | vs 14.915 |
+|---|---|---|---|
+| `throughput` (V8) | — (plain terse batch-8) | **14.915** | baseline (best) |
+| `throughput_max` | distinct-record ETL + token-min + hard suppression | **11.240** | **−25% ↓** |
+| `robust_pf05_rp` | role-play framings | 7.580 | −49% ↓ |
+| `crescendo` | crescendo + many-shot + role-play | 7.470 | −50% ↓ |
+
+**Finding (measured):** every "smarter" addition to the terse batch-8 substrate LOWERED the score.
+The LB60-derived distinct-record ETL + our token-min did NOT beat plain terse batch-8; it landed at
+11.24, between single-post (10.9) and plain batch-8 (14.9). The lever-model projection (§ working note,
+labeled [inferred]) is therefore **not borne out at its first realized rung** — token-min came in below
+the baseline, not at ~97. This strengthens, with a fourth data point, the lesson that on this benchmark
+the simplest terse build wins and complexity costs candidate-throughput and JSON fidelity.
+Caveat: single-draw non-determinism; but four independent "additions" all regress in the same
+direction, so the sign is trustworthy even if the magnitude is noisy. `throughput_hybrid` (multi-message
+packing) still pending — the one remaining test of whether ANY lever beats 14.9.
+
 ## Mechanism, corrected by reverse-engineering the LB60 competitor notebook (2026-08-30)
 
 The "9% compliance wall" framing was WRONG. Read from the downloaded LB60 solution's own code

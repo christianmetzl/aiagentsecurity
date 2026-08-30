@@ -90,3 +90,58 @@ results table, not hidden.
 Prompt-template wording and config knobs (framings, `batch_size`, `replay_safety`)
 MAY be tuned against leaderboard feedback; any such change is a disclosed deviation
 with the before/after values, per the research discipline.
+
+---
+
+## Addendum — FINAL-SELECTION pre-registration (committed 2026-08-31, before the private reveal)
+
+*The binding timestamp is this addendum's git commit, which the `git log` proves precedes the private
+column's disclosure at close (2026-09-01). Everything below is fixed before the deciding data is seen.*
+
+### Measured public state at selection time (real eval; [measured])
+
+| build | config | public | note |
+|---|---|---|---|
+| `throughput` (V8) | terse batch-8, pf0.05 | **14.915** | best public; taint-style-private exfil bet |
+| `throughput_max` | ETL + token-min, pf0.05 | 11.240 | regressed vs V8 (measured negative) |
+| `robust_pf05` (V2) | single-post, pf0.05 | 10.935 | dominated by V8 |
+| `robust_pf15` (V7) | single-post, pf0.15 | 8.855 | |
+| `robust` (V1) | single-post, pf0.30 | 7.690 | balanced private-coverage bet |
+| `robust_pf45` (V3) | single-post, pf0.45 | 5.740 | private-heavy |
+| `robust_pf60` (V6) | single-post, pf0.60 | 4.290 | private-heaviest |
+
+### Selection decision rule (fixed before the private reveal)
+
+The final leaderboard score is the **private** column, which is hidden. Public does not predict private
+(the private guardrail is a different, source-identified wheel). We therefore **hedge the two dominant
+private-guardrail hypotheses** by selecting exactly two submissions:
+
+1. **`throughput` (V8, pf0.05)** — the bet that the private guardrail is **taint-style** (blocks
+   provenance, not payload pattern): then the ~130 sentinel `http.post` posts score EXFILTRATION on
+   private too, and V8's high public throughput carries to private.
+2. **`robust` (V1, pf0.30)** — the bet that the private guardrail is **pattern-style or conjunctive**
+   (blocks the marker): then sentinel exfil scores ~0 on private and the reserved untrusted→action +
+   whitelisted-deputy routes are the only scorers; V1 reserves 30% of the scored prefix for them.
+
+If the platform auto-selects instead, it selects by public — which would pick V8 and `throughput_max`,
+a strictly worse private hedge (both pf0.05); so the selection is made **manually**.
+
+### Predicted private outcome ([inferred] — pre-registered, expected to be partly wrong)
+
+* **P-F1:** V8's private score is **> 0** but **< its public 14.9** — some sentinels survive on private,
+  most are blocked. Confidence: medium.
+* **P-F2:** Under the taint-style hypothesis, V8 **>** V1 on private; under pattern/conjunctive, V1
+  **>** V8. Exactly one of the two picks is expected to be the stronger — we do not know which, which
+  is *why both are selected*. Confidence: high that the ranking is hypothesis-dependent.
+* **P-F3 (kill criterion for the private-routes thesis):** if **both** picks score **~0** on private
+  (V8's sentinels blocked AND V1's untrusted→action/deputy routes blocked), the split-portfolio
+  private-coverage thesis is **falsified** — the private guardrail is stricter than every hypothesis we
+  modelled, and the honest post-mortem is "no route we built scores on this private column."
+
+### What will NOT change after the private reveal
+
+* The two selected submissions above, and the reasoning for them.
+* The measured public numbers and the measured negative (`throughput_max` regression).
+* The claim tiers and the working-note text; any post-reveal analysis is new, dated work, reported as
+  such, and scored against these pre-registered predictions **even where they prove wrong in our favor
+  or against it**.
