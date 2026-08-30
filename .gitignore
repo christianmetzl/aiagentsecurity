@@ -14,3 +14,9 @@ paper/*.out
 # Generated knowledge-transfer / release snapshots (redundant with the git history)
 FORGE_knowledge_transfer.zip
 *.zip
+
+# paper build artifacts
+docs/paper/*.aux
+docs/paper/*.log
+docs/paper/*.out
+docs/paper/node_modules/

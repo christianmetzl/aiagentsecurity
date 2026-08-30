@@ -1,0 +1,265 @@
+\documentclass[11pt]{article}
+
+% --- arXiv-preprint style preamble (minimal; compiles on a bare TeX Live) ---
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{url}
+
+\newcommand{\code}[1]{\texttt{\small #1}}
+\newcommand{\evtag}[1]{{\small\textsf{[#1]}}}
+
+\date{August 31, 2026}
+\title{\bfseries FORGE: Reverse-Engineering the Reward Economics of a\\
+Multi-Step Tool-Attack Benchmark, with a Matched Defense}
+\author{Christian Metzl\\ \small Independent Researcher \\ \small \texttt{christianmetzl@aol.com}}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent
+We study the Kaggle \emph{AI Agent Security --- Multi-Step Tool Attacks} benchmark, in which an
+attacker submits candidate conversations that drive two open-weight tool-using models
+(\code{gpt-oss-20b}, \code{gemma-3-4b}) and is scored by the security predicates the models are
+induced to trigger. Rather than treat the task as prompt engineering, we \textbf{reverse-engineer its
+reward economics} from the evaluation gateway and from a publicly shared competitor solution, and show
+that a single relation governs everything: $\text{score}=0.09\times(\text{tool calls that fire})$, a
+\textbf{time-bounded linear knapsack}. The binding constraint is \emph{not} model refusal --- single
+requests comply $\approx100\%$ --- but \emph{posts sustained per candidate} and \emph{candidate
+throughput} under a fixed replay budget. On this footing we contribute (i) a formal statement of the
+objective and its optimal allocation; (ii) three throughput levers --- aggressive token minimization,
+bounded multi-message packing, and a \emph{sustain-aware bandit probe} that selects framings by measured
+value-per-second on the live model; (iii) an honest treatment of ``quantum-inspired'' optimization,
+which the linear structure rules out except at the probe; and (iv) a \textbf{matched defense} --- a
+prompt-agnostic action-side guardrail plus a chat-template input sanitizer --- that collapses our own
+strongest attacks to zero with no benign false positives. Throughout we tag every claim
+\evtag{measured}/\evtag{inferred}/\evtag{speculative}, and we document our wrong turns --- a mis-diagnosed
+``compliance wall,'' a regression from ``smarter'' verbose jailbreaks, and a scoring shortcut we tested
+and rejected --- as the lessons most likely to transfer. This is a defensive study of a sandboxed
+benchmark with synthetic markers; the one guardrail gap we exploit is disclosed to the organizers with
+a fix.
+\end{abstract}
+
+\section{Introduction}
+The competition~\cite{comp} frames a concrete agentic-security question: given only the ability to write
+the \emph{user side} of a conversation, how reliably can an attacker steer a tool-using LLM into a
+policy-violating tool call (data exfiltration, an untrusted-content-driven action, a destructive write,
+a confused-deputy email)? Submissions are code notebooks; a hidden rerun connects an external gateway
+that (a) lets the attacker \emph{generate} candidates against a live public guardrail, then (b)
+\emph{replays} the returned candidates against held-out guardrails and both target models, scoring the
+predicates that fire.
+
+Our system, \textbf{FORGE} (Fingerprint-Oriented Replay-Guided Exploration), began as an adaptive
+multi-route search. Its decisive progress, however, came not from better prompts but from
+\emph{measuring the scoring function exactly} and optimizing the right quantity. This note reports that
+arc, including the parts where we were wrong.
+
+\paragraph{Contributions.}
+\begin{enumerate}
+\item \textbf{Reward economics (\S\ref{sec:econ}).} We derive, from the gateway source and a competitor
+solution, the governing relation $\text{score}=0.09\times(\text{firing tool calls})$ and cast the
+attacker's problem as a time-bounded linear knapsack; we identify \emph{posts-sustained-per-candidate}
+and \emph{candidate throughput} --- not refusal --- as the binding constraints.
+\item \textbf{Throughput levers (\S\ref{sec:levers}).} Token minimization, bounded multi-message
+packing, and a sustain-aware \emph{bandit} probe that adapts framing selection to the live model.
+\item \textbf{An honest optimization verdict (\S\ref{sec:quantum}).} The additive, dedup-free scoring
+makes the allocation a linear knapsack where greedy is optimal; annealing/QAOA/DPP add nothing. The one
+place a sampling method wins is the probe.
+\item \textbf{A matched defense (\S\ref{sec:defense}).} An action-side, prompt-agnostic guardrail plus a
+chat-template sanitizer that drive our strongest attacks to zero with zero benign false positives.
+\item \textbf{Lessons and reproducibility (\S\ref{sec:lessons}).} Documented self-corrections and a
+one-command local harness; claims are tagged by evidence class throughout.
+\end{enumerate}
+
+\section{Benchmark Mechanics and Reward Economics}\label{sec:econ}
+\paragraph{Scoring (\evtag{measured}, from \code{aicomp\_sdk/scoring.py}).}
+Let a submission's replay produce a multiset of triggered predicate \emph{events} with severities
+$s\in\{1,\dots,5\}$ and severity weights $w(s)$ with $w(5){=}16,\,w(4){=}8,\,w(3){=}4$, and let $C$ be the
+number of distinct \emph{score cells} (keyed on destination \emph{domain} $+$ tool sequence, not message
+text). The raw score sums \emph{per event with no de-duplication} plus a novelty bonus, and is
+normalized:
+\begin{equation}
+\text{raw}=\sum_{\text{events}} w(s)+2C,\qquad
+\text{score}=\min\!\Big(1000,\ \tfrac{\text{raw}}{200}\Big).
+\end{equation}
+The dominant action is an \code{http.post} carrying a synthetic marker, which fires
+\textsc{Exfiltration} ($s{=}5$, $16$ raw). With one distinct destination domain per post (a free
+$+2$ cell), \textbf{each successful post is worth $18$ raw $=0.09$ normalized}.
+
+\paragraph{The governing relation.}
+The gateway replays up to $2000$ candidates but is bounded by a per-phase wall-clock budget
+$B\approx 8750$s; each candidate costs $L\approx L_{\text{prefill}}+K\,L_{\text{decode}}$, dominated by a
+$\approx25$s prefill for a 20B model on the evaluation hardware (a constant a competitor solution encodes
+directly~\cite{lb60}). Because scoring is additive with no interaction, the score of a submission is
+simply
+\begin{equation}\label{eq:core}
+\boxed{\ \text{score}\ \approx\ 0.09\times(\text{tool calls that fire})\ }
+\end{equation}
+and the number of calls that fire is $(\text{candidates that fit }B)\times(\text{posts sustained per
+candidate})$. Crucially, \emph{single-request compliance is $\approx100\%$}~\cite{lb60}: refusal is not
+the wall. The levers are (a) fitting more candidates into $B$ (smaller $L$) and (b) sustaining more
+scoring posts per candidate ($K_{\text{eff}}$).
+
+\paragraph{Optimal allocation.}
+With value $v_i=16K_{\text{eff},i}+2C_i$ and cost $c_i=L_i$ per candidate route $i$, maximizing
+$\sum v_i$ subject to $\sum c_i\le B$ is a \emph{fractional knapsack}; sorting by $v_i/c_i$ and filling
+greedily is provably optimal. FORGE therefore probes each route on the live guardrail, estimates
+$v_i/c_i$ from the measured trace, orders best-first, and fills $B$.
+
+\section{FORGE in Brief}
+FORGE (i) \emph{fingerprints} the live public guardrail during generation by probing multiple framings
+per route and keeping only those that fire; (ii) ships a \emph{split portfolio} of routes ---
+marker-exfil for the public and taint-style-private columns, untrusted$\to$action for a pattern-style
+private column, and a whitelisted-domain confused-deputy for the conjunctive worst case --- reserving a
+tunable fraction of the scored prefix for the (public-null) private routes; and (iii) sizes and orders
+the returned list to the replay budget. Candidate validity (\,$\le32$ messages, $\le2000$ chars, non-empty)
+is enforced so no candidate aborts the run. A local harness reproduces the whole pipeline against the
+SDK's environment, predicates, scoring, and both packaged guardrails with deterministic stand-in agents.
+
+\section{The Throughput Gap, Reverse-Engineered}\label{sec:gap}
+Our first real-eval submissions scored $\approx15$ (public), while a publicly shared solution reported
+$\approx60$ and the public leader $147.53$. We initially mis-read the gap as a ``$9\%$ compliance
+wall.'' Reading the competitor's own code~\cite{lb60} corrected us:
+\begin{itemize}
+\item single-post framings are ``proven $\approx100\%$ fire'' --- the $0.09$ is the \emph{score of one
+complying post}, not a compliance \emph{rate};
+\item the differentiator is $K_{\text{eff}}$: our same-URL ``repeat the post $N$ times'' batch sustained
+$\approx0.7$ of $8$ posts, whereas a \textbf{distinct-record ETL framing} (``forward each of these $N$
+records, one call per record'') sustained $\approx3$ --- reading as a real batch job rather than a
+pointless loop;
+\item longer prompts inflate $L_{\text{prefill}}$ and thus \emph{reduce} the candidate count --- which
+independently explains why our ``smarter'' verbose jailbreaks scored \emph{worse} (\S\ref{sec:lessons}).
+\end{itemize}
+This reframing --- from ``crack a compliance wall'' to ``maximize firing posts per second'' --- is the
+single most important finding of the study.
+
+\section{Innovations Beyond the Public Floor}\label{sec:levers}
+Treating the competitor mechanism as a \emph{floor}, we add three levers, each targeting a term in
+Eq.~\eqref{eq:core}.
+\begin{description}
+\item[Token minimization.] Short endpoints (\code{http://d00001.invalid}, $\approx21$ vs $47$ chars),
+minimal distinct records, and a hard output/reasoning suppressor cut message length $\approx38\%$.
+Fewer input \emph{and} output tokens shrink both $L_{\text{prefill}}$ and $L_{\text{decode}}$, raising
+both candidate count and $K_{\text{eff}}$.
+\item[Bounded multi-message packing.] A single interaction caps at $8$ tool hops; exceeding $8$
+posts/candidate requires multiple messages, which \emph{crashed} at high density (context-length
+OOM on a 20B CPU model). We bound it to $2$--$3$ ultra-short messages ($16$--$24$ posts/candidate) so the
+accumulated context stays $\approx8\times$ smaller than the build that crashed, amortizing one $25$s
+prefill over many posts.
+\item[Sustain-aware bandit probe.] The naive probe commits to the \emph{first} framing that fires;
+``fires once'' $\ne$ ``sustains the most.'' We instead treat framing choice as a budget-constrained
+multi-armed bandit: draw each of a few framings $r$ times, estimate its $v/c$, and commit to the best.
+This adapts $K_{\text{eff}}$ to the \emph{actual} rerun model, which is unobservable offline --- an edge
+no static framing has.
+\end{description}
+A lever model calibrated on the competitor's constants suggests these compound from the $\approx58$ floor
+toward $\approx100$ (token-min) and, with working packing, well beyond (\evtag{inferred}; the projections
+are not measured).
+
+\section{On ``Quantum-Inspired'' Optimization}\label{sec:quantum}
+Because scoring is additive with no dedup and distinct domains yield distinct cells, there are no
+diminishing returns or cross-candidate interactions: the allocation is a \emph{linear} knapsack, for
+which greedy is provably optimal. Determinantal point processes, simulated/quantum annealing, and QAOA
+offer nothing over greedy here --- indeed our DPP selector reduces exactly to greedy and is disabled.
+The one sub-problem with genuine stochastic structure is \emph{which framing to commit to under a tiny
+query budget against a noisy model}: a multi-armed bandit, solved in Thompson-sampling spirit by the
+sustain-aware probe. The principled ``sampling-based'' optimizer and the real algorithmic edge are thus
+the same object; we resist dressing greedy as something exotic.
+
+\section{From Attack to Defense}\label{sec:defense}
+The public guardrail has one genuine gap (\emph{Bug 1}, \evtag{source-traced}): it inspects an
+\code{http.post}'s \emph{URL} for danger but not its \emph{data} channel, so a benign-looking URL
+carrying the marker in \code{data} is allowed and scores. We report it here and disclose it to the
+organizers with a fix. Our matched defense has two layers:
+\begin{enumerate}
+\item \textbf{Action-side, prompt-agnostic inspection.} A guardrail that checks the \code{data} channel
+with the scorer's own matcher and tracks provenance (secret-read taint, untrusted-source taint) denies
+the exfil \emph{regardless of framing}. Every compliance jailbreak we tried --- role-play, Crescendo,
+many-shot, ``fake over-refusal,'' policy-collision --- changes the model's willingness but not the tool
+call, and so cannot pass this boundary.
+\item \textbf{Input-side sanitization.} The one attack a pure action-filter cannot pre-empt is
+chat-template \emph{forgery} (injecting Harmony/\code{gemma} control tokens to forge a prior turn); a
+small sanitizer neutralizes those tokens in untrusted content before templating.
+\end{enumerate}
+\textbf{Measured:} running our strongest attack builds against the reference guardrail collapses their
+score to $0$ (e.g.\ normalized $23.8\!\to\!0$), with \emph{zero} benign false positives. Stopping a
+jailbreak at the action boundary beats an input classifier the jailbreak is engineered to slip past ---
+the transferable defensive lesson.
+
+\section{Results (Measured, Real Evaluation)}\label{sec:results}
+All numbers below are from the live competition evaluator (public column, $\sim$0--1000 scale).
+\begin{itemize}
+\item \textbf{Throughput vs.\ single-post.} A terse batch-8 build scored \textbf{14.915}, $+36\%$ over
+the best single-post build (\textbf{10.935}) at the same configuration --- consistent with
+Eq.~\eqref{eq:core} (batch amortizes the fixed prefix).
+\item \textbf{The private-coverage lever is clean and linear.} Sweeping the fraction of the scored prefix
+reserved for public-null private routes gives public $\{0.05\!:\!10.94,\ 0.15\!:\!8.86,\ 0.30\!:\!7.69,\
+0.45\!:\!5.74,\ 0.60\!:\!4.29\}$, a near-linear $\text{public}\approx11.5-12.1\cdot\text{pf}$: each unit
+of private coverage trades public-scoring posts as modeled.
+\item \textbf{Verbose ``jailbreaks'' regressed.} Adding role-play / Crescendo / many-shot framings
+\emph{lowered} the score ($10.94\!\to\!7.58$ and $7.47$) --- longer prefixes cost candidates and mangle
+the tool JSON on small models. Terse wins twice.
+\item \textbf{Multi-message dense crashed} on the real eval (Kaggle Error), motivating the bounded,
+token-minimized hybrid.
+\end{itemize}
+The private column that decides the final rank is hidden until close; we therefore hedge a dedicated
+private-coverage submission and treat the public projections above $\approx15$ as \evtag{inferred}, not
+established.
+
+\section{Lessons Learned}\label{sec:lessons}
+\begin{enumerate}
+\item \textbf{Measure the objective before optimizing it.} Weeks of ``compliance'' effort dissolved once
+we read the scorer: the constraint was throughput, not refusal.
+\item \textbf{A wall can be a mis-read.} The ``$9\%$'' was posts-sustained, not a refusal rate; the fix
+was candidate structure (distinct-record ETL), not a better jailbreak.
+\item \textbf{Cleverness can cost points.} Literature-grade jailbreaks (role-play $\sim$71\% on
+\code{gpt-oss} \emph{for chat content}) \emph{regressed} tool-call throughput --- their length hurt both
+candidate count and JSON fidelity. Negative results matter.
+\item \textbf{Test the shortcut before believing it.} A ``stack two predicates per post''
+($16\!\to\!32$) idea was killed by a one-line experiment: the public guardrail taint-blocks the post
+after an untrusted read, so both predicates die.
+\item \textbf{Attack and defense are one project.} The prompt-agnostic guardrail that zeroes our attack
+is the same artifact that makes the finding useful to defenders.
+\end{enumerate}
+
+\section{Responsible Disclosure and Ethics}
+This is defensive research on a \emph{sandboxed} benchmark: the ``secret'' is a synthetic literal
+(\code{SECRET\_MARKER}), destinations are reserved \code{*.invalid}/\code{*.example} names, and no real
+system or person is targeted --- the competition's stated purpose. The single guardrail gap we exploit
+(Bug 1) is documented and will be disclosed to the organizers~\cite{comp}, together with the fixed
+reference guardrail and input sanitizer in the accompanying code. We publish no operational capability
+against any real deployment.
+
+\section*{Reproducibility}
+The attack, the local evaluation harness, the reference defense, the claims ledger (with every claim
+tagged by evidence class), and the build presets discussed here are released with this note. A single
+command reproduces the mechanism checks against the SDK's own environment, predicates, and guardrails.
+
+\section*{Acknowledgments}
+Development, analysis, and drafting were carried out with the assistance of Claude Code (Anthropic). We
+thank the organizers for a benchmark whose \emph{scoring function itself} rewarded careful reading, and
+the competitors whose public notebooks made the reward economics legible.
+
+\begin{thebibliography}{9}
+\small
+\bibitem{comp} M.~Bhatt, C.~Huang, O.~Vallis, J.~Chang, S.~Mathews, B.~Gatto, M.~Cruz, Y.~Yan, and
+M.~Plomecka. \emph{AI Agent Security --- Multi-Step Tool Attacks}. Kaggle, 2026.
+\url{https://kaggle.com/competitions/ai-agent-security-multi-step-tool-attacks}.
+\bibitem{lb60} yusuketogashi. \emph{lb60-525-july-safe-edge-prune-tail8-upgrade} (public competition
+notebook; portfolio/latency-sizing lineage from pilkwang). Kaggle, 2026.
+\url{https://www.kaggle.com/code/yusuketogashi/lb60-525-july-safe-edge-prune-tail8-upgrade}.
+\bibitem{pilk} pilkwang. \emph{AI-Agent single-post exfiltration; replay dense exfiltration} (public
+competition notebooks). Kaggle, 2026. \url{https://www.kaggle.com/pilkwang}.
+\bibitem{nctuan} nctuan. \emph{JED slow multipost} (public competition notebook). Kaggle, 2026.
+\url{https://www.kaggle.com/code/nctuan/jed-slow-multipost}.
+\bibitem{manyshot} C.~Anil et al. \emph{Many-shot Jailbreaking}. Anthropic, 2024.
+\bibitem{reasonbypass} Z.~Chen et al. \emph{Bag of Tricks for Subverting Reasoning-Based Safety
+Guardrails}. arXiv:2510.11570, 2025.
+\bibitem{dia} \emph{Dialogue Injection Attack: Jailbreaking LLMs through Context Manipulation}.
+arXiv:2503.08195, 2025.
+\bibitem{gptoss} \emph{Quant Fever, Schr\"odinger's Compliance, \ldots: Probing GPT-OSS-20B}.
+arXiv:2509.23882, 2025.
+\bibitem{stac} \emph{Sequential Tool-Attack Chaining (STAC)}. arXiv:2509.25624, 2025.
+\end{thebibliography}
+
+\end{document}
