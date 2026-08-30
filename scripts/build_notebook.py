@@ -195,6 +195,10 @@ def main() -> None:
         # minimised so context stays ~8x smaller than the max_density=16 build that OOM'd. Biggest
         # single lever (~227). One 25s prefill amortised over 16 posts. May still OOM -- one-slot test.
         ("forge_submission_throughput_hybrid.ipynb", "throughput_hybrid", 0.05),
+        # MULTIMSG: the SUSTAIN attack -- n terse single-post messages (~100% fire each) vs one
+        # 8-hop batch (~1.4 of 8 sustained). The untested structural lever for public.
+        ("forge_submission_multimsg.ipynb", "multimsg", 0.05),
+        ("forge_submission_multimsg16.ipynb", "multimsg16", 0.05),
         # --- PRE-BUILT for tomorrow (ready to fire once today's scores read) ---
         # SUSTAIN_MAX: the flagship algorithmic edge -- bandit probe picks the best-SUSTAINING batch
         # framing on the live model (max raw-per-second). Useful in both branches.
