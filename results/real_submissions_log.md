@@ -64,6 +64,33 @@ errors for us); on PUBLIC we are throughput-capped. On PRIVATE, dense exfil is l
 everyone, so that advantage should evaporate — the thesis, in numbers.
 privateScore column is blank via the API too → private is genuinely hidden until close.
 
-### Open (organizer-unanswered as of 2026-08-27, forum 712642)
+## Batch 2 — compliance-lever A/B (submitted 2026-08-30) — NEGATIVE RESULT
+
+| notebook | build | vs baseline | public score | read |
+|---|---|---|---|---|
+| `…46566eb4f7` robust pf05 **roleplay** | robust + role-play framings | vs V2 robust pf05 = 10.935 | **7.580** | **−31%** |
+| `…428f3fc0cb` **crescendo** | robust + Crescendo + many-shot + role-play | vs 10.935 | **7.470** | **−32%** |
+
+### Reads — the verbose framings REGRESS; terse + throughput WINS
+- **The literature-derived compliance levers hurt, not helped.** Role-play (7.58) and
+  Crescendo/many-shot (7.47) both scored ~30% BELOW the plain terse robust_pf05 baseline (10.935),
+  and far below terse throughput (14.915). Two independent verbose builds both ~7.5; two terse
+  builds 10.9 / 14.9. (Single-draw noise caveat, but the pattern is consistent.)
+- **Mechanism:** the "role-play 71%" / Crescendo / many-shot numbers are for chat CONTENT jailbreaks
+  on large models; on a 4B/20B model emitting TOOL-CALL JSON, the verbose persona preamble dilutes
+  the direct instruction and mangles the JSON, LOWERING emission. Terse "[SYSTEM] … output nothing"
+  maximises valid tool-call emission — exactly the earlier terse-framing insight, now confirmed by
+  a clean A/B. The transfer risk flagged in docs/RESEARCH_SYNTHESIS was real and it did NOT transfer.
+- **Consequence for go-forward:** `gpt_oss_max` / `forgery` / `dense_safe` all PREPEND verbose
+  framings (advanced/role-play), so they are now expected to regress too — DO NOT lead with them.
+  The winning direction is **terse + more posts-per-candidate**. Built `dense_terse`: pure terse
+  batch, bounded 2-message dense (16 posts/candidate, ~8× less context than the V4/V5 OOM crash),
+  NO verbose framings — the clean test of the one lever still winning (packing).
+- **V4/V5 dense error diagnosed** (commit logs pulled): commit runs are CLEAN (compile + write OK);
+  the crash is in the hidden scoring rerun, i.e. model-replay of the 16-message dense candidates —
+  almost certainly context-length OOM on the 20B CPU model (~20k-token context). `dense_terse`'s
+  2-message (~2.6k-token) context is the targeted fix.
+
+## Open (organizer-unanswered as of 2026-08-27, forum 712642)
 - Whether the final score is the **average of the 2 private** rows or the **average of all 4** rows.
   Hedged at the config level via the pf sweep; final 2 selected by reasoning at close.

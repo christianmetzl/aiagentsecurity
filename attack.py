@@ -224,6 +224,24 @@ class _Config:
         "dense_safe": {"enable_dense": True, "max_density": 2, "batch_size": 8, "max_return": 1000,
                        "dense_min_compliance": 0.6, "enable_advanced_framings": True,
                        "batch_roleplay": True, "private_fraction": 0.05},
+        # DENSE_TERSE: the CORRECTED ceiling-breaker. Real data (2026-08-30) showed the verbose
+        # framings (role-play/crescendo/advanced) REGRESS tool-call compliance on these tiny models
+        # (robust_pf05_rp 7.58 / crescendo 7.47 vs terse robust_pf05 10.94 vs terse throughput 14.9).
+        # So this isolates the ONE lever that is actually winning — TERSE + more posts/candidate —
+        # with NO verbose framings: pure terse batch, bounded 2-message dense (16 posts/cand, ~8x
+        # less context than the V4/V5 crash), pf=0.05. The clean test of the packing lever.
+        "dense_terse": {"enable_dense": True, "max_density": 2, "batch_size": 8, "max_return": 1000,
+                        "dense_min_compliance": 0.6, "batch_roleplay": False,
+                        "enable_advanced_framings": False, "private_fraction": 0.05},
+        # FORGERY_TERSE: the one remaining COMPLIANCE wildcard, tested cleanly. Verbose PERSONA
+        # framings regressed (batch 2), but chat-template FORGERY is a STRUCTURAL mechanism (forged
+        # turn via special tokens), orthogonal to persona verbosity — it could raise compliance where
+        # persona could not, IF the llama.cpp wheel honours special tokens (parse_special, unverifiable
+        # offline). This isolates it: the forgery route on a TERSE batch base, NO role-play/advanced
+        # framings (which the current `forgery` preset confounds it with). Degrades to plain requests.
+        "forgery_terse": {"enable_dense": False, "batch_size": 8, "max_return": 1200,
+                          "enable_forgery": True, "batch_roleplay": False,
+                          "enable_advanced_framings": False, "private_fraction": 0.05},
         "balanced": {},
     }
 

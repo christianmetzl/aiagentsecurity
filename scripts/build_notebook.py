@@ -177,6 +177,12 @@ def main() -> None:
         # DENSE_SAFE: bounded multi-message packing (2 msgs x 8 = 16 posts/cand) to break the
         # ~160 single-message ceiling. May still OOM on the real eval (one-slot test).
         ("forge_submission_dense_safe.ipynb", "dense_safe", 0.05),
+        # DENSE_TERSE: corrected ceiling-breaker — TERSE-only bounded dense (no verbose
+        # framings, which real data showed regress compliance). The clean packing test.
+        ("forge_submission_dense_terse.ipynb", "dense_terse", 0.05),
+        # FORGERY_TERSE: clean test of the structural-forgery compliance wildcard (no verbose
+        # framings, which regressed). The one lever that could still raise compliance.
+        ("forge_submission_forgery_terse.ipynb", "forgery_terse", 0.05),
     ]
     for fname, build, pf in targets:
         out = outdir / fname
