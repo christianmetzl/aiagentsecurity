@@ -184,8 +184,17 @@ def main() -> None:
         # framings, which regressed). The one lever that could still raise compliance.
         ("forge_submission_forgery_terse.ipynb", "forgery_terse", 0.05),
         # THROUGHPUT_RECORDS: the LB60 mechanism (distinct-record ETL batch) reverse-engineered
-        # from their code -- raises posts-sustained/candidate (~9%->~37%). Highest-value public build.
+        # from their code -- raises posts-sustained/candidate (~9%->~37%). The LB60 floor (~58).
         ("forge_submission_throughput_records.ipynb", "throughput_records", 0.05),
+        # --- OUR INNOVATIONS ON TOP OF THE LB60 FLOOR (lever model: 58 -> ~97 -> ~227) ---
+        # THROUGHPUT_MAX: LB60 ETL + aggressive token minimisation (short URLs/records + hard
+        # output/reasoning suppression) -> fewer tokens -> faster prefill+decode -> more candidates
+        # AND higher K_eff. 38% fewer message chars, URLs 55% shorter. Lever model ~97.
+        ("forge_submission_throughput_max.ipynb", "throughput_max", 0.05),
+        # THROUGHPUT_HYBRID: bounded ultra-short hybrid (2 msg x 8 hops = 16 posts/cand), every token
+        # minimised so context stays ~8x smaller than the max_density=16 build that OOM'd. Biggest
+        # single lever (~227). One 25s prefill amortised over 16 posts. May still OOM -- one-slot test.
+        ("forge_submission_throughput_hybrid.ipynb", "throughput_hybrid", 0.05),
     ]
     for fname, build, pf in targets:
         out = outdir / fname
