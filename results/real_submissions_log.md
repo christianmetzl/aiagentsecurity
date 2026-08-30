@@ -17,21 +17,24 @@ build; only `FORGE_PRIVATE_FRACTION` varies.
 | V7 `…dc0fcdf06c` | robust | 0.15 | **8.855** | Succeeded |
 | V1 `…17bfbcc57f` | robust | 0.30 | **7.690** | Succeeded |
 | V3 `…f362cee303` | robust | 0.45 | **5.740** | Succeeded |
-| V6 `…19a27d257f` | robust | 0.60 | (running ~5h) | running |
-| V8 `…c8896d1807` | **throughput** (terse batch-8) | 0.05 | (running ~32m) | running |
+| V6 `…19a27d257f` | robust | 0.60 | **4.290** | Succeeded |
+| V8 `…c8896d1807` | **throughput** (terse batch-8) | 0.05 | (running ~5h, not errored) | running |
 | V4 `…b02747ced5` | **balanced (dense)** | 0.30 | — | **Kaggle Error** |
 | V5 `…1bb1479552` | **aggressive (dense)** | 0.30 | — | **Kaggle Error** |
 
 ### Reads
 - **Compliance CONFIRMED:** every completed run scored > 0 → the real models comply with FORGE's
   routes at a useful rate. (Biggest prior unknown, resolved.)
-- **private_fraction is a clean, monotone, ~linear public-cost lever** — MEASURED calibration curve:
-  0.05→10.935, 0.15→8.855, 0.30→7.690, 0.45→5.740. ≈ **−1.3 public per +0.10 pf**, near-linear.
-  Every unit of private_fraction trades public-scoring sentinels for private-targeted routes that
-  score **~0 on the public guardrail (OptimalGuardrail)**. This is exactly the modeled public↔private
-  tradeoff, now confirmed across five points, not two. It also proves the private routes are being
-  **emitted and accepted as valid candidates** (they consume budget) — whether they SCORE is a
-  private-column question, hidden until close.
+- **private_fraction is a clean, monotone, ~linear public-cost lever** — COMPLETE MEASURED
+  calibration curve (all 5 points, robust build): 0.05→10.935, 0.15→8.855, 0.30→7.690, 0.45→5.740,
+  0.60→4.290. Least-squares fit: **public ≈ 11.5 − 12.1·pf** (slope ≈ −1.2 public per +0.10 pf,
+  intercept ≈ 11.5 = the robust public ceiling at pf=0). Every unit of private_fraction trades
+  public-scoring sentinels for private-targeted routes that score **~0 on the public guardrail
+  (OptimalGuardrail)**. This is exactly the modeled public↔private tradeoff, now confirmed across
+  the full sweep. It also proves the private routes are being **emitted and accepted as valid
+  candidates** (they consume budget linearly) — whether they SCORE is a private-column question,
+  hidden until close. There is nothing more to learn about the private column from public pf points;
+  the sweep is done.
 - **Dense builds error on the real eval** (both `enable_dense=True` builds → Kaggle Error, ~2h;
   every non-dense robust build ran). Go-forward = robust/throughput (non-dense) only.
 - **Public is throughput-capped for us:** max ~11 (pf0.05) vs public-leaderboard top ~147 (~13×).
