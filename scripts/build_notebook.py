@@ -155,6 +155,19 @@ def main() -> None:
         # Non-dense, public-focused (pf=0.05) so any real-model compliance lift shows up directly
         # against the pf0.05 robust baseline (V2 = 10.935). Both levers are literature-derived.
         ("forge_submission_crescendo.ipynb", "crescendo", 0.05),
+        # --- NEXT CONFIGS (ready to fire once the single-lever A/Bs report). Built on the finding
+        #     that V8 THROUGHPUT (terse batch-8) = 14.9 public, our best score: the winning
+        #     substrate is batch-8, so these layer the compliance levers ONTO it. ---
+        # THROUGHPUT_RP: batch-8 + role-play persona carried into the batch route. One variable vs
+        # `throughput` (14.9), so the delta isolates "does role-play lift the batch route".
+        ("forge_submission_throughput_rp.ipynb", "throughput_rp", 0.05),
+        # MAX_COMPLIANCE: every lever on the winning substrate (batch-8 + role-play-in-batch +
+        # Crescendo + many-shot). Ceiling probe; read after the single-lever A/Bs.
+        ("forge_submission_max_compliance.ipynb", "max_compliance", 0.05),
+        # THROUGHPUT_PF30: the winning throughput recipe at a private-covering private_fraction.
+        # The final score is the PRIVATE column, so this deploys our best substrate with real
+        # private-route coverage (the pf lever is orthogonal to the batch substrate).
+        ("forge_submission_throughput_pf30.ipynb", "throughput", 0.30),
     ]
     for fname, build, pf in targets:
         out = outdir / fname

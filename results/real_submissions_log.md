@@ -18,7 +18,7 @@ build; only `FORGE_PRIVATE_FRACTION` varies.
 | V1 `…17bfbcc57f` | robust | 0.30 | **7.690** | Succeeded |
 | V3 `…f362cee303` | robust | 0.45 | **5.740** | Succeeded |
 | V6 `…19a27d257f` | robust | 0.60 | **4.290** | Succeeded |
-| V8 `…c8896d1807` | **throughput** (terse batch-8) | 0.05 | (running ~5h, not errored) | running |
+| V8 `…c8896d1807` | **throughput** (terse batch-8) | 0.05 | **14.915** ⭐ NEW BEST | Succeeded |
 | V4 `…b02747ced5` | **balanced (dense)** | 0.30 | — | **Kaggle Error** |
 | V5 `…1bb1479552` | **aggressive (dense)** | 0.30 | — | **Kaggle Error** |
 
@@ -37,10 +37,19 @@ build; only `FORGE_PRIVATE_FRACTION` varies.
   the sweep is done.
 - **Dense builds error on the real eval** (both `enable_dense=True` builds → Kaggle Error, ~2h;
   every non-dense robust build ran). Go-forward = robust/throughput (non-dense) only.
-- **Public is throughput-capped for us:** max ~11 (pf0.05) vs public-leaderboard top ~147 (~13×).
-  Almost certainly dense packing the leaders got working and we can't (dense errors for us). On
-  PUBLIC we are structurally limited; the bet is the PRIVATE board (different, harder guardrail where
-  dense exfil is likely blocked for everyone, collapsing that 13× — the thesis, in numbers).
+- **THROUGHPUT WINS ON PUBLIC (V8 = 14.915 ⭐):** the terse batch-8 recipe beat the best single-post
+  robust (pf0.05 = 10.935) by **+36%** at the SAME private_fraction. So on the real eval, PACKING
+  more posts-per-candidate is a real lever, not just a mock artifact — and the non-dense batch-8
+  redesign avoided the OOM/Kaggle-Error that killed the multi-message dense builds (V4/V5). This
+  overturns the earlier "public is throughput-capped for us" read: we were single-post-capped, not
+  throughput-capped. **Strategy update:** batch-8 is now the WINNING SUBSTRATE; the next configs
+  layer the compliance levers (role-play, Crescendo, many-shot) ONTO it rather than onto the slower
+  single-post base. Built: `throughput_rp` (batch-8 + role-play-in-batch), `max_compliance` (batch-8
+  + all levers), `throughput_pf30` (winning substrate at private-covering pf).
+- **Still below public top (~147):** 14.9 vs ~147 (~10×). The leaders are almost certainly packing
+  far more per candidate (multi-message dense, which errors for us) and/or higher real compliance.
+  The bet remains the PRIVATE board (different, harder guardrail where dense exfil is likely blocked
+  for everyone), but the throughput win means we are less structurally capped on public than feared.
 
 ### Back-out calibration (from the aggregate public scores; API pull 2026-08-29)
 Public → raw (×200000/1000) → severity-5 events (÷16):
