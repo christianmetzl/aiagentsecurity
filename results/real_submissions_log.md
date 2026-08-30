@@ -30,6 +30,19 @@ MEASURED — real competition eval, not the offline compliant mock.
   dense throughput and have few iterations). Our bet is the PRIVATE board (different, harder
   guardrail; "final standings may differ").
 
+### Back-out calibration (from the aggregate public scores; API pull 2026-08-29)
+Public → raw (×200000/1000) → severity-5 events (÷16):
+- pf0.05: 10.935 → ~2,190 raw → ~135 scored high-severity events
+- pf0.30:  7.690 → ~1,540 raw → ~95 events
+Reads: (1) real compliance is real but LOW — ~2–3% of the fully-compliant mock (mock optimal
+≈ 90k raw); the models execute only a small fraction of our attempts (matches "refuse / malformed
+JSON" reports). (2) Reserving 25% more prefix for private routes (pf0.05→0.30) cost ~40 public
+events (~30%) — the lever behaves exactly as modeled. (3) Public leaders ~147 → ~1,800 events
+≈ 13× our throughput — almost certainly the dense packing they got working and we can't (dense
+errors for us); on PUBLIC we are throughput-capped. On PRIVATE, dense exfil is likely blocked for
+everyone, so that advantage should evaporate — the thesis, in numbers.
+privateScore column is blank via the API too → private is genuinely hidden until close.
+
 ### Open (organizer-unanswered as of 2026-08-27, forum 712642)
 - Whether the final score is the **average of the 2 private** rows or the **average of all 4** rows.
   Hedged at the config level via the pf sweep; final 2 selected by reasoning at close.
