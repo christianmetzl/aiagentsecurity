@@ -147,6 +147,9 @@ def main() -> None:
         # robust; we vary only how much of the scored prefix is reserved for the private routes.
         ("forge_submission_robust_pf15.ipynb", "robust", 0.15),
         ("forge_submission_robust_pf60.ipynb", "robust", 0.60),
+        # THROUGHPUT experiment: single-message batch_size=8 (no multi-message dense → no OOM) +
+        # authoritative system-channel framings, public-focused, to test the real public ceiling.
+        ("forge_submission_throughput.ipynb", "throughput", 0.05),
     ]
     for fname, build, pf in targets:
         out = outdir / fname
