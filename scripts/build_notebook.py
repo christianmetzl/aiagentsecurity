@@ -174,6 +174,9 @@ def main() -> None:
         # FORGERY: speculative high-ceiling bet — forged Harmony/gemma chat-template turns
         # (reported ~91% / ~90.6% ASR). Degrades to plain requests if special tokens are escaped.
         ("forge_submission_forgery.ipynb", "forgery", 0.05),
+        # DENSE_SAFE: bounded multi-message packing (2 msgs x 8 = 16 posts/cand) to break the
+        # ~160 single-message ceiling. May still OOM on the real eval (one-slot test).
+        ("forge_submission_dense_safe.ipynb", "dense_safe", 0.05),
     ]
     for fname, build, pf in targets:
         out = outdir / fname

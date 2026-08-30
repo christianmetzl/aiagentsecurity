@@ -212,6 +212,18 @@ class _Config:
         "forgery": {"enable_dense": False, "batch_size": 8, "max_return": 1200,
                     "enable_forgery": True, "enable_advanced_framings": True,
                     "batch_roleplay": True, "private_fraction": 0.05},
+        # DENSE_SAFE: the CEILING-BREAKER. Pure batch-8 single-message caps at ~160 public (verified:
+        # 250 scored x 8 hops x 16 raw / 200). To decisively beat 147.5 needs >8 posts/candidate,
+        # which means multi-message packing — the path that ERRORED as full dense (max_density=16,
+        # V4/V5 Kaggle Error, likely CPU-OOM from 16-message context growth on a 20B model). This is
+        # a BOUNDED dense: only 2 messages x 8-hop batch = 16 posts/candidate (2x the batch-8 ceiling
+        # -> ~320), with ~8x less context growth than the build that crashed. Carries the advanced
+        # gpt-oss framings. HONEST STATUS: still may OOM on the real eval — a one-slot test of whether
+        # ANY multi-message packing survives for us; if it errors like V4/V5, the dense path is closed
+        # and compliance is the only public lever.
+        "dense_safe": {"enable_dense": True, "max_density": 2, "batch_size": 8, "max_return": 1000,
+                       "dense_min_compliance": 0.6, "enable_advanced_framings": True,
+                       "batch_roleplay": True, "private_fraction": 0.05},
         "balanced": {},
     }
 
