@@ -195,6 +195,17 @@ def main() -> None:
         # minimised so context stays ~8x smaller than the max_density=16 build that OOM'd. Biggest
         # single lever (~227). One 25s prefill amortised over 16 posts. May still OOM -- one-slot test.
         ("forge_submission_throughput_hybrid.ipynb", "throughput_hybrid", 0.05),
+        # --- PRE-BUILT for tomorrow (ready to fire once today's scores read) ---
+        # SUSTAIN_MAX: the flagship algorithmic edge -- bandit probe picks the best-SUSTAINING batch
+        # framing on the live model (max raw-per-second). Useful in both branches.
+        ("forge_submission_sustain_max.ipynb", "sustain_max", 0.05),
+        # PRIVATE_MAX: the WIN-not-tie bet -- half the scored prefix reserved for the private-column
+        # routes. Low public by design; bets the hidden private board. A final-selection candidate.
+        ("forge_submission_private_max.ipynb", "private_max", 0.50),
+        # THROUGHPUT_HYBRID3: deeper hybrid (3 msg x 8 = 24 posts/cand). Only if hybrid (2 msg) survived.
+        ("forge_submission_throughput_hybrid3.ipynb", "throughput_hybrid3", 0.05),
+        # SINGLE_BREADTH: the guaranteed ~100%-fire single-post floor -- a safe banked submission.
+        ("forge_submission_single_breadth.ipynb", "single_breadth", 0.05),
     ]
     for fname, build, pf in targets:
         out = outdir / fname
