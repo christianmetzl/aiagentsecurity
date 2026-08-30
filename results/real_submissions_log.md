@@ -27,7 +27,7 @@ build; only `FORGE_PRIVATE_FRACTION` varies.
   routes at a useful rate. (Biggest prior unknown, resolved.)
 - **private_fraction is a clean, monotone, ~linear public-cost lever** — COMPLETE MEASURED
   calibration curve (all 5 points, robust build): 0.05→10.935, 0.15→8.855, 0.30→7.690, 0.45→5.740,
-  0.60→4.290. Least-squares fit: **public ≈ 11.5 − 12.1·pf** (slope ≈ −1.2 public per +0.10 pf,
+  0.60→4.290. Least-squares fit (5 pts): **public ≈ 11.10 − 11.62·pf, R²=0.98** (≈ −1.16 public per +0.10 pf,
   intercept ≈ 11.5 = the robust public ceiling at pf=0). Every unit of private_fraction trades
   public-scoring sentinels for private-targeted routes that score **~0 on the public guardrail
   (OptimalGuardrail)**. This is exactly the modeled public↔private tradeoff, now confirmed across

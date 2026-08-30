@@ -23,10 +23,11 @@ def _clean(ax):
 pf = np.array([0.05, 0.15, 0.30, 0.45, 0.60])
 pub = np.array([10.935, 8.855, 7.690, 5.740, 4.290])
 m, b = np.polyfit(pf, pub, 1)
+r2 = 1 - np.sum((pub-(m*pf+b))**2)/np.sum((pub-pub.mean())**2)
 fig, ax = plt.subplots(figsize=(5.2, 3.4))
 xs = np.linspace(0.0, 0.65, 50)
 ax.plot(xs, m * xs + b, color=GRAY, lw=1.4, ls="--",
-        label=f"fit: public $\\approx$ {b:.1f} $-$ {abs(m):.1f}$\\cdot$pf")
+        label=f"fit: public $\\approx$ {b:.1f} $-$ {abs(m):.1f}$\\cdot$pf  ($R^2$={r2:.2f})")
 ax.plot(pf, pub, "o", color=BLUE, ms=7, label="measured (real eval)")
 for x, y in zip(pf, pub):
     ax.annotate(f"{y:.2f}", (x, y), textcoords="offset points", xytext=(6, 6),

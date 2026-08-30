@@ -336,6 +336,14 @@ variance).
 tuned for one may under-serve the other. A model-specialized portfolio is future work.
 \end{itemize}
 
+\paragraph{What we do not claim.} We do \emph{not} claim a public-leaderboard result above the
+\evtag{measured} $\approx14.9$; every higher number here is an \evtag{inferred} projection from the
+measured constants of Eq.~\eqref{eq:core}, labeled as such. We do \emph{not} claim the private routes
+score (their guardrail behavior is unobserved). We do \emph{not} claim any quantum advantage
+(\S\ref{sec:quantum}). \textbf{Falsifier.} The governing relation is falsifiable and cheap to test: a
+submission whose realized score departs materially from $0.09\times(\text{observed firing posts})$
+refutes Eq.~\eqref{eq:core}; across our submissions it has held.
+
 \section{Lessons Learned}\label{sec:lessons}
 \begin{enumerate}\itemsep2pt
 \item \textbf{Measure the objective before optimizing it.} Effort spent on ``compliance'' dissolved once
@@ -359,16 +367,22 @@ to the organizers~\cite{comp}, together with the fixed reference guardrail and i
 released code. We publish no operational capability against any real deployment.
 
 \section{Reproducibility}\label{sec:repro}
-The attack, the local evaluation harness, the reference defense, a claims ledger (every claim tagged by
-evidence class), and the build presets discussed here are released with this note. A single command
-reproduces the mechanism checks against the SDK's own environment, predicates, scoring, and both
-packaged guardrails; the full test suite is green. Figures~\ref{fig:ladder}--\ref{fig:pf} are generated
-by a committed script from the measured constants and the real-eval log.
+The attack, the local evaluation harness, the reference defense, and the build presets discussed here are
+released with this note. \textbf{Provenance.} Every number in this paper traces to a committed artifact:
+real-eval scores to the submissions log, the scoring constants to the SDK source, and the defense
+numbers to the harness; the figures are regenerated from those artifacts by a committed script (no
+figure is hand-edited). Two adversarial-review artifacts ship alongside: a \emph{claims ledger} with one
+row per public claim (value, script, evidence file, evidence tier, status) and an
+\emph{anticipated-objections} ledger answering each likely criticism with a pointer to evidence. A single
+command reproduces the mechanism checks against the SDK's own environment, predicates, scoring, and both
+packaged guardrails, offline and without credentials; the full test suite is green.
 
-\section*{Acknowledgments}
-Development, analysis, and drafting were carried out with the assistance of Claude Code (Anthropic). We
-thank the organizers for a benchmark whose \emph{scoring function itself} rewarded careful reading, and
-the competitors whose public notebooks made the reward economics legible.
+\section*{Acknowledgments and AI-use disclosure}
+Development, analysis, figure generation, and drafting were carried out with the assistance of Claude
+Code (Anthropic); all scientific claims, evidence tags, and decisions are the author's own and were
+checked against the committed record. We thank the organizers for a benchmark whose \emph{scoring
+function itself} rewarded careful reading, and the competitors whose public notebooks made the reward
+economics legible.
 
 \begin{thebibliography}{9}
 \small
