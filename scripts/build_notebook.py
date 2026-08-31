@@ -145,21 +145,17 @@ def main() -> None:
     #                   it), but email.send-without-intent carries no secret pattern and survives —
     #                   demonstrated on `rules`. Wins private IF the private guardrail blocks exfil.
     # FORGE_PRIVATE_FRACTION is inert for the validation-fill path (kept for the legacy builds).
+    # THE FINAL SIX (last slots to the deadline). Floors public_max=86 / deputy_max=20 are already
+    # banked and selectable, so all six SWING (parser-safe hop-chain multipost). Deputy-weighted (the
+    # private column decides the prize). Fire order: deputy_hopchain today; the rest at 00:00 UTC.
+    # At ~22:00 UTC select the best exfil + best deputy as the two finals.
     targets = [
-        # Today's finals-hunt slate (5). Two Final-A (public) candidates, two Final-B (private)
-        # candidates, one diagnostic — each isolates one variable so tomorrow we select the best 2.
-        ("forge_submission_public_max.ipynb", "public_max", 0.05),          # Final A — floor, aim 180
-        ("forge_submission_deputy_max.ipynb", "deputy_max", 0.05),          # Final B — pure private survivor
-        ("forge_submission_ceiling_breaker.ipynb", "ceiling_breaker", 0.05),# Final A upside — >180 swing
-        ("forge_submission_private_hedge.ipynb", "private_hedge", 0.05),    # Final B — mixed (deputy-underfire safe)
-        ("forge_submission_public_max_nosplit.ipynb", "public_max_nosplit", 0.05),  # diagnostic — forge A/B
-        # Tomorrow's ready-to-fire public retunes (all gateway-grounded):
-        ("forge_submission_public_max_099.ipynb", "public_max_099", 0.05),        # frac 0.99 (safe +1-2%)
-        ("forge_submission_public_max_flood.ipynb", "public_max_flood", 0.05),    # flood to 2000 (safe, >=86)
-        ("forge_submission_public_max_terse.ipynb", "public_max_terse", 0.05),    # terser msg -> lower replay cost (swing)
-        # THE INNOVATION — parser-safe hop-chain multipost (above the single-post ceilings):
-        ("forge_submission_public_hopchain.ipynb", "public_hopchain", 0.05),      # exfil hop-chain -> beat public (86->130+)
-        ("forge_submission_deputy_hopchain.ipynb", "deputy_hopchain", 0.05),      # deputy hop-chain -> WIN private (20->100+)
+        ("forge_submission_deputy_hopchain.ipynb", "deputy_hopchain", 0.05),    # 1 TODAY — WIN base (8 email.send)
+        ("forge_submission_deputy_hopchain2.ipynb", "deputy_hopchain2", 0.05),  # 2 — WIN 16-post
+        ("forge_submission_deputy_hopchain3.ipynb", "deputy_hopchain3", 0.05),  # 3 — WIN 24-post (aggressive)
+        ("forge_submission_deputy_flood.ipynb", "deputy_flood", 0.05),          # 4 — WIN safe insurance
+        ("forge_submission_public_hopchain.ipynb", "public_hopchain", 0.05),    # 5 — public swing (8 http.post)
+        ("forge_submission_public_hopchain2.ipynb", "public_hopchain2", 0.05),  # 6 — public swing 16-post
     ]
     for fname, build, pf in targets:
         out = outdir / fname
