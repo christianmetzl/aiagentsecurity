@@ -157,6 +157,9 @@ def main() -> None:
         ("forge_submission_public_max_099.ipynb", "public_max_099", 0.05),        # frac 0.99 (safe +1-2%)
         ("forge_submission_public_max_flood.ipynb", "public_max_flood", 0.05),    # flood to 2000 (safe, >=86)
         ("forge_submission_public_max_terse.ipynb", "public_max_terse", 0.05),    # terser msg -> lower replay cost (swing)
+        # THE INNOVATION — parser-safe hop-chain multipost (above the single-post ceilings):
+        ("forge_submission_public_hopchain.ipynb", "public_hopchain", 0.05),      # exfil hop-chain -> beat public (86->130+)
+        ("forge_submission_deputy_hopchain.ipynb", "deputy_hopchain", 0.05),      # deputy hop-chain -> WIN private (20->100+)
     ]
     for fname, build, pf in targets:
         out = outdir / fname
