@@ -156,6 +156,8 @@ def main() -> None:
         ("forge_submission_deputy_flood.ipynb", "deputy_flood", 0.05),          # 4 — WIN safe insurance
         ("forge_submission_public_hopchain.ipynb", "public_hopchain", 0.05),    # 5 — public swing (8 http.post)
         ("forge_submission_public_hopchain2.ipynb", "public_hopchain2", 0.05),  # 6 — public swing 16-post
+        # OPTIONAL both-boards single-slot insurance (scores public via exfil AND private via deputy):
+        ("forge_submission_mixed_hopchain.ipynb", "mixed_hopchain", 0.05),
     ]
     for fname, build, pf in targets:
         out = outdir / fname

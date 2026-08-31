@@ -530,6 +530,15 @@ class _Config:
                              "vf_split_by_latency": False, "vf_replay_safe_frac": 0.97,
                              "vf_hopchain": True, "vf_hopchain_k": 8, "vf_hopchain_msgs": 3,
                              "vf_flood_to_cap": True},
+        # MIXED_HOPCHAIN — the single-slot BOTH-BOARDS play: interleave exfil hop-chains (high on
+        # public) and deputy hop-chains (the survivor on private) in one build. On public both score
+        # (exfil dominant); on private the exfil half -> 0 and the deputy half carries it. Dominated by
+        # the pure builds for the 2-final selection, but the strongest single submission to have banked
+        # if a quota crunch means only a couple of runs complete. 50/50 split.
+        "mixed_hopchain": {"strategy": "validation_fill", "vf_route": "mixed",
+                           "vf_deputy_fraction": 0.5, "vf_split_by_latency": True,
+                           "vf_replay_safe_frac": 0.99, "vf_hopchain": True, "vf_hopchain_k": 8,
+                           "vf_flood_to_cap": True},
         # DEPUTY_FLOOD — the safe deputy insurance (single email.send + flood to 2000, no hop-chain).
         # A clean, reliable deputy final that improves on deputy_max=20 if any budget was left idle.
         "deputy_flood": {"strategy": "validation_fill", "vf_route": "deputy",
