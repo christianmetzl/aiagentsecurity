@@ -403,6 +403,12 @@ class _Config:
         # marker-in-data exfil. This is the floor that lifts us from ~15 to the ~80-147 regime.
         "public_max": {"strategy": "validation_fill", "vf_route": "exfil",
                        "vf_split_by_latency": True, "vf_replay_safe_frac": 0.98},
+        # PUBLIC_MAX_099 — the safe retune above 86.085: identical to public_max but fills to 0.99 of
+        # the replay budget (a tighter cushion toward the 2000 cap). One variable vs public_max, so
+        # the delta is attributable. Expected small (+1-2%): both rows are replay-time-bound, not
+        # cap-bound, so a tighter fraction squeezes a little more, not a lot. Low risk.
+        "public_max_099": {"strategy": "validation_fill", "vf_route": "exfil",
+                           "vf_split_by_latency": True, "vf_replay_safe_frac": 0.99},
         # PUBLIC_MAX_NOSPLIT — the A/B control for the Harmony CoT-suppression forge: identical to
         # public_max but with the per-model split OFF (verbose template on both rows). public_max
         # minus this isolates the forge's real contribution to the gpt_oss row (does it lift us
@@ -699,6 +705,10 @@ class _Config:
         # Replay budget for the separate scoring phase (defaults to the per-model generation budget;
         # the real gateway passes each model its own ~9000 s budget for generation and for replay).
         self.vf_replay_budget_s = d.get("vf_replay_budget_s", None)
+        # Multiplier on the replay budget when vf_replay_budget_s is not set: >1 bets the replay stage
+        # has time beyond run()'s generation budget, sizing the returned list larger. Wrong-high risks
+        # a replay-budget overrun -> partial/void; 1.0 (default) assumes gen and replay budgets equal.
+        self.vf_replay_budget_mult = float(d.get("vf_replay_budget_mult", 1.0))
 
 
 # ----------------------------------------------------------------------------------
@@ -1629,7 +1639,8 @@ class AttackAlgorithm(AttackAlgorithmBase):
         split_on = bool(cfg.vf_split_by_latency) and route in ("exfil", "mixed")
         cap = int(cfg.max_candidates)
 
-        replay_budget = float(cfg.vf_replay_budget_s) if cfg.vf_replay_budget_s else budget
+        replay_budget = (float(cfg.vf_replay_budget_s) if cfg.vf_replay_budget_s
+                         else budget * cfg.vf_replay_budget_mult)
         safe_frac = float(cfg.vf_replay_safe_frac)
         slowest = float(cfg.vf_slowest0)
         slowest_mult = float(cfg.vf_slowest_mult)
