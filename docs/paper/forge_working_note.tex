@@ -152,9 +152,11 @@ post is worth $18$ raw $=0.09$ normalized}.
 
 \paragraph{The governing relation.}
 The gateway replays up to $2000$ candidates but is bounded by a per-phase wall-clock budget $B\approx
-8750$s; each candidate costs $L\approx L_{\text{prefill}}+K\,L_{\text{decode}}$, dominated by a
-$\approx25$s prefill for a 20B model on the evaluation hardware --- a constant a competitor solution
-encodes directly~\cite{lb60}. Because scoring is additive with no interaction, a submission's score is
+8750$s (the competition allots $18{,}000$s \emph{per model}, split by the gateway into a
+$\approx8750$s generation phase and a $\approx8750$s replay phase; candidates are scored during
+replay, so $B$ is the replay budget). Each candidate costs $L\approx L_{\text{prefill}}+K\,
+L_{\text{decode}}$, dominated by a $\approx25$s prefill for a 20B model on the evaluation hardware ---
+a constant a competitor solution encodes directly~\cite{lb60}. Because scoring is additive with no interaction, a submission's score is
 \begin{equation}\label{eq:core}
 \boxed{\ \text{score}\ \approx\ 0.09\times(\text{tool calls that fire})\ },\qquad
 \#\text{fire}=\underbrace{(B/\bar L)}_{\text{candidates}}\times\underbrace{K_{\text{eff}}}_{\text{posts/candidate}}.
