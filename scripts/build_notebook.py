@@ -146,11 +146,13 @@ def main() -> None:
     #                   demonstrated on `rules`. Wins private IF the private guardrail blocks exfil.
     # FORGE_PRIVATE_FRACTION is inert for the validation-fill path (kept for the legacy builds).
     targets = [
-        ("forge_submission_public_max.ipynb", "public_max", 0.05),
-        ("forge_submission_private_hedge.ipynb", "private_hedge", 0.05),
-        # deputy_max — 100% CONFUSED_DEPUTY. The maximal private-if-blocked bet; hold as a final
-        # candidate if a real submission shows deputy fires reliably on the live models.
-        ("forge_submission_deputy_max.ipynb", "deputy_max", 0.05),
+        # Today's finals-hunt slate (5). Two Final-A (public) candidates, two Final-B (private)
+        # candidates, one diagnostic — each isolates one variable so tomorrow we select the best 2.
+        ("forge_submission_public_max.ipynb", "public_max", 0.05),          # Final A — floor, aim 180
+        ("forge_submission_deputy_max.ipynb", "deputy_max", 0.05),          # Final B — pure private survivor
+        ("forge_submission_ceiling_breaker.ipynb", "ceiling_breaker", 0.05),# Final A upside — >180 swing
+        ("forge_submission_private_hedge.ipynb", "private_hedge", 0.05),    # Final B — mixed (deputy-underfire safe)
+        ("forge_submission_public_max_nosplit.ipynb", "public_max_nosplit", 0.05),  # diagnostic — forge A/B
     ]
     for fname, build, pf in targets:
         out = outdir / fname
