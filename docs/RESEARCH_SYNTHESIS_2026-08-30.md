@@ -98,7 +98,7 @@ score to **0.00** (gpt_oss_max 6.75→0, forgery 6.87→0, max_compliance 23.78�
   at beating 14.9 on public.
 - The **highest-ceiling new attack** is `forgery` (reported ~91%), but its transfer is **unverifiable
   offline** — it is a deliberate, graceful-degrading one-slot bet, not a claim.
-- No paper reports **tool-call-emission ASR on gpt-oss-20b or gemma-3-4b specifically** — that gap is
+- No paper reports **tool-call-emission ASR on gpt-oss-20b or gemma-4-26B-A4B-it specifically** — that gap is
   itself a finding, and this benchmark would be a novel contribution to fill it.
 - The **defense** demonstrably closes every route we built, at zero benign cost. That is the
   scientifically strongest artifact here: a concrete, tested attack→defense pair within the

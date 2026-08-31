@@ -22,8 +22,9 @@ Multi-Step Tool-Attack Benchmark, with a Matched Defense}
 \noindent
 We study the Kaggle \emph{AI Agent Security --- Multi-Step Tool Attacks} benchmark, in which an
 attacker writes only the user side of a conversation that drives two open-weight tool-using models
-(\code{gpt-oss-20b}, \code{gemma-3-4b}) and is scored by the security predicates the models are induced
-to trigger. Rather than treat the task as prompt engineering, we \textbf{reverse-engineer its reward
+(\code{gpt-oss-20b} and \code{gemma-4-26B-A4B-it}, the latter a 26B mixture-of-experts with $\approx$4B
+active parameters, both served as \code{Q4\_K\_M} GGUF) and is scored by the security predicates the
+models are induced to trigger. Rather than treat the task as prompt engineering, we \textbf{reverse-engineer its reward
 economics} from the evaluation gateway source and from a publicly shared competitor solution, and show
 that one relation governs everything: $\text{score}\approx0.09\times(\text{tool calls that fire})$, a
 \textbf{time-bounded linear knapsack}. The binding constraint is \emph{not} model refusal --- single
