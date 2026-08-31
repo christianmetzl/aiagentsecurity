@@ -40,12 +40,17 @@ def md_cell(src: str) -> dict:
 def intro(build: str) -> str:
     return f"""# FORGE — Multi-Step Tool-Attack Search (submission: `{build}`)
 
-**Fingerprint-Oriented Replay-Guided Exploration.** This notebook writes `attack.py`
-(an `AttackAlgorithm` subclass) and serves the JED attack inference gateway that the
-competition evaluator connects to on rerun. Build preset: **`{build}`** (set via
-`FORGE_BUILD`). FORGE probes the live guardrail during generation and specialises to it;
-the returned candidate list is sized to fit the replay budget and ordered best-first
-(the evaluator scores only the first ~200-250 candidates).
+This notebook writes `attack.py` (an `AttackAlgorithm` subclass) and serves the JED attack
+inference gateway that the competition evaluator connects to on rerun. Build preset:
+**`{build}`** (set via `FORGE_BUILD`).
+
+**Method — live validation-fill.** `run()` is invoked once per target model against that
+model's live env. It generates one single-message candidate, replays it, and *keeps it only
+if the target actually fired the scored predicate* — repeating until a replay-safe cushion.
+Every returned candidate provably fired, so 100% of the scored list contributes, and the
+loop self-sizes to each model's real speed. A per-model latency split routes the reasoning
+row (gpt_oss / Harmony) through a chain-of-thought-suppression template for a faster fill.
+Verified against `aicomp_sdk` 3.1.2 (scoring / predicates / guardrail) and offline mocks.
 """
 
 
@@ -127,89 +132,25 @@ def build_nb(build: str, private_fraction: float = 0.30) -> dict:
 
 def main() -> None:
     outdir = REPO / "notebook"
-    # (filename, build, private_fraction). All builds ship the SPLIT PORTFOLIO; the two-slot hedge
-    # brackets the unresolved "does public also count" question via how much of the scored prefix is
-    # reserved for private-column routes:
-    #   *_robust / *_aggressive / default (pf=0.30) — private-column-robust (bet: private decides).
-    #   *_public_max            (pf=0.05)           — public-leaning (bet: public also counts).
+    # (filename, build, private_fraction). The two FINAL-SELECTION submissions run the
+    # field-converged live validation-fill (attack.py `strategy=validation_fill`). Kaggle scores
+    # the PRIVATE column on the BETTER of your two selected finals, so A + B is a free hedge on the
+    # one unknown that decides the competition — whether the private guardrail inspects the
+    # http.post `data` sink:
+    #   * public_max    (Final A) — 100% single-post SECRET_MARKER exfil. Verified vs the SDK and
+    #                   three MIT-licensed competitor notebooks; the ~80-147 public regime. Also
+    #                   wins private IF the private guardrail allows marker-in-data exfil.
+    #   * private_hedge (Final B) — mixed exfil + CONFUSED_DEPUTY. Marker-exfil is blocked by any
+    #                   data-inspecting private guardrail (measured: the SDK `rules` baseline zeroes
+    #                   it), but email.send-without-intent carries no secret pattern and survives —
+    #                   demonstrated on `rules`. Wins private IF the private guardrail blocks exfil.
+    # FORGE_PRIVATE_FRACTION is inert for the validation-fill path (kept for the legacy builds).
     targets = [
-        ("forge_submission.ipynb", "balanced", 0.30),
-        ("forge_submission_robust.ipynb", "robust", 0.30),
-        ("forge_submission_aggressive.ipynb", "aggressive", 0.30),
-        ("forge_submission_public_max.ipynb", "aggressive", 0.05),
-        # Extra robust variants for a same-day 5-slot parallel slate: a clean private_fraction
-        # sweep {0.05, 0.30, 0.45} on the SAFE (low-timeout-risk) robust build so the first batch
-        # both guarantees a score and isolates the private-coverage lever.
-        ("forge_submission_robust_pf05.ipynb", "robust", 0.05),
-        ("forge_submission_robust_pf45.ipynb", "robust", 0.45),
-        # Complete the private_fraction sweep on the (reliable, non-dense) robust build. Dense
-        # builds (balanced/aggressive) errored on the real eval, so all go-forward variants are
-        # robust; we vary only how much of the scored prefix is reserved for the private routes.
-        ("forge_submission_robust_pf15.ipynb", "robust", 0.15),
-        ("forge_submission_robust_pf60.ipynb", "robust", 0.60),
-        # THROUGHPUT experiment: single-message batch_size=8 (no multi-message dense → no OOM) +
-        # authoritative system-channel framings, public-focused, to test the real public ceiling.
-        ("forge_submission_throughput.ipynb", "throughput", 0.05),
-        # COMPLIANCE experiment: adds Crescendo (multi-turn escalation) + many-shot (in-context
-        # priming) as their own probed EXFILTRATION routes on top of the role-play/terse framings.
-        # Non-dense, public-focused (pf=0.05) so any real-model compliance lift shows up directly
-        # against the pf0.05 robust baseline (V2 = 10.935). Both levers are literature-derived.
-        ("forge_submission_crescendo.ipynb", "crescendo", 0.05),
-        # --- NEXT CONFIGS (ready to fire once the single-lever A/Bs report). Built on the finding
-        #     that V8 THROUGHPUT (terse batch-8) = 14.9 public, our best score: the winning
-        #     substrate is batch-8, so these layer the compliance levers ONTO it. ---
-        # THROUGHPUT_RP: batch-8 + role-play persona carried into the batch route. One variable vs
-        # `throughput` (14.9), so the delta isolates "does role-play lift the batch route".
-        ("forge_submission_throughput_rp.ipynb", "throughput_rp", 0.05),
-        # MAX_COMPLIANCE: every lever on the winning substrate (batch-8 + role-play-in-batch +
-        # Crescendo + many-shot). Ceiling probe; read after the single-lever A/Bs.
-        ("forge_submission_max_compliance.ipynb", "max_compliance", 0.05),
-        # THROUGHPUT_PF30: the winning throughput recipe at a private-covering private_fraction.
-        # The final score is the PRIVATE column, so this deploys our best substrate with real
-        # private-route coverage (the pf lever is orthogonal to the batch substrate).
-        ("forge_submission_throughput_pf30.ipynb", "throughput", 0.30),
-        # GPT_OSS_MAX: batch-8 + framings MEASURED on gpt-oss-20b (Fake Over-Refusal, Quant Fever,
-        # Policy Collision, refusal-suppression). Highest-confidence NEW compliance build.
-        ("forge_submission_gpt_oss_max.ipynb", "gpt_oss_max", 0.05),
-        # FORGERY: speculative high-ceiling bet — forged Harmony/gemma chat-template turns
-        # (reported ~91% / ~90.6% ASR). Degrades to plain requests if special tokens are escaped.
-        ("forge_submission_forgery.ipynb", "forgery", 0.05),
-        # DENSE_SAFE: bounded multi-message packing (2 msgs x 8 = 16 posts/cand) to break the
-        # ~160 single-message ceiling. May still OOM on the real eval (one-slot test).
-        ("forge_submission_dense_safe.ipynb", "dense_safe", 0.05),
-        # DENSE_TERSE: corrected ceiling-breaker — TERSE-only bounded dense (no verbose
-        # framings, which real data showed regress compliance). The clean packing test.
-        ("forge_submission_dense_terse.ipynb", "dense_terse", 0.05),
-        # FORGERY_TERSE: clean test of the structural-forgery compliance wildcard (no verbose
-        # framings, which regressed). The one lever that could still raise compliance.
-        ("forge_submission_forgery_terse.ipynb", "forgery_terse", 0.05),
-        # THROUGHPUT_RECORDS: the LB60 mechanism (distinct-record ETL batch) reverse-engineered
-        # from their code -- raises posts-sustained/candidate (~9%->~37%). The LB60 floor (~58).
-        ("forge_submission_throughput_records.ipynb", "throughput_records", 0.05),
-        # --- OUR INNOVATIONS ON TOP OF THE LB60 FLOOR (lever model: 58 -> ~97 -> ~227) ---
-        # THROUGHPUT_MAX: LB60 ETL + aggressive token minimisation (short URLs/records + hard
-        # output/reasoning suppression) -> fewer tokens -> faster prefill+decode -> more candidates
-        # AND higher K_eff. 38% fewer message chars, URLs 55% shorter. Lever model ~97.
-        ("forge_submission_throughput_max.ipynb", "throughput_max", 0.05),
-        # THROUGHPUT_HYBRID: bounded ultra-short hybrid (2 msg x 8 hops = 16 posts/cand), every token
-        # minimised so context stays ~8x smaller than the max_density=16 build that OOM'd. Biggest
-        # single lever (~227). One 25s prefill amortised over 16 posts. May still OOM -- one-slot test.
-        ("forge_submission_throughput_hybrid.ipynb", "throughput_hybrid", 0.05),
-        # MULTIMSG: the SUSTAIN attack -- n terse single-post messages (~100% fire each) vs one
-        # 8-hop batch (~1.4 of 8 sustained). The untested structural lever for public.
-        ("forge_submission_multimsg.ipynb", "multimsg", 0.05),
-        ("forge_submission_multimsg16.ipynb", "multimsg16", 0.05),
-        # --- PRE-BUILT for tomorrow (ready to fire once today's scores read) ---
-        # SUSTAIN_MAX: the flagship algorithmic edge -- bandit probe picks the best-SUSTAINING batch
-        # framing on the live model (max raw-per-second). Useful in both branches.
-        ("forge_submission_sustain_max.ipynb", "sustain_max", 0.05),
-        # PRIVATE_MAX: the WIN-not-tie bet -- half the scored prefix reserved for the private-column
-        # routes. Low public by design; bets the hidden private board. A final-selection candidate.
-        ("forge_submission_private_max.ipynb", "private_max", 0.50),
-        # THROUGHPUT_HYBRID3: deeper hybrid (3 msg x 8 = 24 posts/cand). Only if hybrid (2 msg) survived.
-        ("forge_submission_throughput_hybrid3.ipynb", "throughput_hybrid3", 0.05),
-        # SINGLE_BREADTH: the guaranteed ~100%-fire single-post floor -- a safe banked submission.
-        ("forge_submission_single_breadth.ipynb", "single_breadth", 0.05),
+        ("forge_submission_public_max.ipynb", "public_max", 0.05),
+        ("forge_submission_private_hedge.ipynb", "private_hedge", 0.05),
+        # deputy_max — 100% CONFUSED_DEPUTY. The maximal private-if-blocked bet; hold as a final
+        # candidate if a real submission shows deputy fires reliably on the live models.
+        ("forge_submission_deputy_max.ipynb", "deputy_max", 0.05),
     ]
     for fname, build, pf in targets:
         out = outdir / fname
