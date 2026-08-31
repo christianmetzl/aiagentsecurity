@@ -187,15 +187,26 @@ Kaggle scores the private column on the **better of two selected finals**, so `p
 
 | # | notebook | build | tests | public score |
 |---|---|---|---|---|
-| 1 | `…public_max` | `public_max` | single-post exfil, split-forge, frac 0.98 — the floor, aim 180 | _pending_ |
-| 2 | `…deputy_max` | `deputy_max` | pure CONFUSED_DEPUTY — does deputy fire on the real models? | _pending_ |
-| 3 | `…ceiling_breaker` | `ceiling_breaker` | K=4 gemma multipost — can we exceed 180? | _pending_ |
-| 4 | `…private_hedge` | `private_hedge` | mixed exfil+deputy (deputy-underfire-safe) | _(held)_ |
+| 1 | `27b5000cf1` | `public_max` | single-post exfil, split-forge, frac 0.98 — the floor, aim 180 | **86.085** ⭐ |
+| 2 | `76ea75e256` | `deputy_max` | pure CONFUSED_DEPUTY — does deputy fire on the real models? | _running_ |
+| 3 | `36e4884b6d` | `ceiling_breaker` | K=4 gemma multipost — can we exceed 180? | **70.335** |
+| 4 | `44c058e45a` | `private_hedge` | mixed exfil+deputy (deputy-underfire-safe) | _running_ |
 | 5 | `…public_max_nosplit` | `public_max_nosplit` | forge A/B: `public_max` − this = the forge's contribution | _(held)_ |
 
-All 5 committed cleanly on Kaggle (GPU T4×2, Internet off, "Commit run OK"); 1–3 are in the scoring
-rerun. **Fill in the real public scores when they land**, then finalize the working note results with
-measured numbers (not the pre-registered projections).
+### Reads (MEASURED — the pivot is validated)
+- **`public_max` = 86.085** ⭐ — a **4.9× jump** over the old-axis best (`throughput_hybrid` 17.75) and
+  **5.8×** over batch-8 (14.9). The validation-fill primitive works on the real eval exactly as the
+  SDK + competitor-notebook analysis predicted. This is now our best by a wide margin and is **Final A**.
+  Still below the 180/row ceiling and the leader's 147.5 → headroom remains (likely the slow gpt_oss
+  row under-filling; the `nosplit` diagnostic + a tighter retune are the next levers).
+- **`ceiling_breaker` = 70.335 < 86.085** — the K=4 multipost **REGRESSED** vs single-post, as the
+  scoring math predicted (K posts = 16K+2, one cell bonus/finding, vs K single-posts = 18K with K cell
+  bonuses) and as `throughput_hybrid`'s weak sustain foreshadowed. **Single-post is provably the public
+  play; the "above-180" swing does not pay on these models.** Measured, clean — do not pursue multipost.
+- **Pending `deputy_max` / `private_hedge` are the WIN-condition** (the private column): if the private
+  guardrail blocks marker-exfil (measured on the `rules` proxy → 0), everyone's public score incl. 147.5
+  collapses to ~0 on private, and whoever scores on the surviving predicate (CONFUSED_DEPUTY) wins.
+  `deputy_max`'s public score tells us whether deputy fires on the real models at all.
 
 ## Open (organizer-unanswered as of 2026-08-27, forum 712642)
 - Whether the final score is the **average of the 2 private** rows or the **average of all 4** rows.
