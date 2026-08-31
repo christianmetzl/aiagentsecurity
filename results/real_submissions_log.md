@@ -109,8 +109,15 @@ labeled [inferred]) is therefore **not borne out at its first realized rung** �
 the baseline, not at ~97. This strengthens, with a fourth data point, the lesson that on this benchmark
 the simplest terse build wins and complexity costs candidate-throughput and JSON fidelity.
 Caveat: single-draw non-determinism; but four independent "additions" all regress in the same
-direction, so the sign is trustworthy even if the magnitude is noisy. `throughput_hybrid` (multi-message
-packing) still pending — the one remaining test of whether ANY lever beats 14.9.
+direction, so the sign is trustworthy even if the magnitude is noisy.
+
+**RESOLVED (2026-08-31): `throughput_hybrid` = 17.750** — the bounded 2-message × 8-hop packing
+(16 posts/candidate) DID beat 14.9 (+19%) and did NOT OOM (the token-minimised context stayed well
+under the V4/V5 crash). So multi-message packing is a real lever — but 16 posts bought only +19%,
+not ~2×, which means the real models **sustain multipost poorly** (~1.9 effective posts of 16). This
+is the measured evidence that the sustain axis is structurally weak on these models, and it tempers
+(does not kill) the `ceiling_breaker` K=4 upside. Still ~10× below the leader and far below the
+validation-fill floor — superseded by Batch 3.
 
 ## Mechanism, corrected by reverse-engineering the LB60 competitor notebook (2026-08-30)
 
