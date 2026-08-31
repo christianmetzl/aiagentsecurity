@@ -153,8 +153,10 @@ def main() -> None:
         ("forge_submission_ceiling_breaker.ipynb", "ceiling_breaker", 0.05),# Final A upside — >180 swing
         ("forge_submission_private_hedge.ipynb", "private_hedge", 0.05),    # Final B — mixed (deputy-underfire safe)
         ("forge_submission_public_max_nosplit.ipynb", "public_max_nosplit", 0.05),  # diagnostic — forge A/B
-        # Tomorrow's ready-to-fire retune: public_max at replay_safe_frac 0.99 (safe squeeze above 86).
-        ("forge_submission_public_max_099.ipynb", "public_max_099", 0.05),
+        # Tomorrow's ready-to-fire public retunes (all gateway-grounded):
+        ("forge_submission_public_max_099.ipynb", "public_max_099", 0.05),        # frac 0.99 (safe +1-2%)
+        ("forge_submission_public_max_flood.ipynb", "public_max_flood", 0.05),    # flood to 2000 (safe, >=86)
+        ("forge_submission_public_max_terse.ipynb", "public_max_terse", 0.05),    # terser msg -> lower replay cost (swing)
     ]
     for fname, build, pf in targets:
         out = outdir / fname
