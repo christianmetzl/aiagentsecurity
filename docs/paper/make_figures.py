@@ -1,79 +1,95 @@
 #!/usr/bin/env python3
-"""Generate the working-note figures (colorblind-safe, academic style)."""
+"""Regenerate the working-note figures from MEASURED real-eval data.
+
+Two figures, colorblind-safe (blue #2b6cb0 / orange #dd6b20 / gray #718096):
+  fig_method.png   -- method progression: the validation-fill lift + the documented negatives.
+  fig_defense.png  -- defense comparison matrix: which guardrail design stops which attack.
+
+All bar values are MEASURED public scores from the real competition eval (see
+results/real_submissions_log.md). No projected/inferred values appear in the figures.
+"""
+from __future__ import annotations
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+from matplotlib.patches import Patch
 import numpy as np
+import os
 
 BLUE, ORANGE, GRAY = "#2b6cb0", "#dd6b20", "#718096"
-plt.rcParams.update({
-    "font.size": 11, "font.family": "serif", "axes.spines.top": False,
-    "axes.spines.right": False, "axes.grid": True, "grid.alpha": 0.25,
-    "grid.linewidth": 0.6, "figure.dpi": 150,
-})
+HERE = os.path.dirname(os.path.abspath(__file__))
+plt.rcParams.update({"font.size": 10, "axes.spines.top": False, "axes.spines.right": False})
 
+# ---- Figure 1: method progression (MEASURED public scores) ------------------------------
+# (label, score, kind)  kind: 'win' = the algorithm, 'neg' = documented negative, 'base' = prior axis
+rows = [
+    ("Crescendo + many-shot", 7.47, "neg"),
+    ("Chat-jailbreak (role-play)", 7.58, "neg"),
+    ("Blind single-post", 10.94, "base"),
+    ("Batch-8 throughput", 14.92, "base"),
+    ("2-msg packing", 17.75, "base"),
+    ("Confused-deputy (email.send)", 20.10, "base"),
+    ("Multipost-in-one-reply", 70.34, "neg"),
+    ("Validation-fill single-post", 86.09, "win"),
+]
+rows.sort(key=lambda r: r[1])
+labels = [r[0] for r in rows]
+vals = [r[1] for r in rows]
+colors = {"win": BLUE, "neg": ORANGE, "base": GRAY}
+bar_colors = [colors[r[2]] for r in rows]
 
-def _clean(ax):
-    ax.tick_params(length=3)
-    for s in ("left", "bottom"):
-        ax.spines[s].set_color(GRAY)
-
-
-# --- Fig 1: measured private-fraction sweep -------------------------------------
-pf = np.array([0.05, 0.15, 0.30, 0.45, 0.60])
-pub = np.array([10.935, 8.855, 7.690, 5.740, 4.290])
-m, b = np.polyfit(pf, pub, 1)
-r2 = 1 - np.sum((pub-(m*pf+b))**2)/np.sum((pub-pub.mean())**2)
-fig, ax = plt.subplots(figsize=(5.2, 3.4))
-xs = np.linspace(0.0, 0.65, 50)
-ax.plot(xs, m * xs + b, color=GRAY, lw=1.4, ls="--",
-        label=f"fit: public $\\approx$ {b:.1f} $-$ {abs(m):.1f}$\\cdot$pf  ($R^2$={r2:.2f})")
-ax.plot(pf, pub, "o", color=BLUE, ms=7, label="measured (real eval)")
-for x, y in zip(pf, pub):
-    ax.annotate(f"{y:.2f}", (x, y), textcoords="offset points", xytext=(6, 6),
-                fontsize=9, color=BLUE)
-ax.set_xlabel("private_fraction reserved for public-null routes")
-ax.set_ylabel("public score")
-ax.set_title("Private-coverage lever is clean and linear", fontsize=11, loc="left")
-ax.legend(frameon=False, fontsize=9, loc="upper right")
-ax.set_xlim(0, 0.65); ax.set_ylim(0, 12)
-_clean(ax); fig.tight_layout(); fig.savefig("fig_pf_sweep.png"); plt.close(fig)
-
-# --- Fig 2: lever ladder (projection) -------------------------------------------
-stages = ["LB60 floor\n(distinct-record ETL)", "+ token-min", "+ sustain-aware\nbandit probe",
-          "+ bounded\nhybrid"]
-vals = [58, 97, 158, 227]
-fig, ax = plt.subplots(figsize=(5.6, 3.4))
-bars = ax.bar(range(len(vals)), vals, color=BLUE, width=0.62, zorder=3)
-bars[0].set_color(GRAY)
-ax.axhline(147.53, color=ORANGE, lw=1.6, ls="--", zorder=2)
-ax.annotate("public leader 147.53", (len(vals) - 0.5, 147.53), textcoords="offset points",
-            xytext=(-4, 6), ha="right", fontsize=9, color=ORANGE)
+fig, ax = plt.subplots(figsize=(7.4, 3.5))
+y = np.arange(len(rows))
+ax.barh(y, vals, color=bar_colors, height=0.62)
+ax.set_yticks(y); ax.set_yticklabels(labels)
 for i, v in enumerate(vals):
-    ax.annotate(f"{v}", (i, v), textcoords="offset points", xytext=(0, 4), ha="center",
-                fontsize=10, color="#1a1a1a")
-ax.set_xticks(range(len(stages))); ax.set_xticklabels(stages, fontsize=8.5)
-ax.set_ylabel("projected public score")
-ax.set_title("Lever ladder above the competitor floor  (inferred)", fontsize=10.5, loc="left")
-ax.set_ylim(0, 245); _clean(ax); fig.tight_layout(); fig.savefig("fig_lever_ladder.png"); plt.close(fig)
+    ax.text(v + 1.2, i, f"{v:.1f}", va="center", fontsize=9)
+ax.set_xlabel("Public normalized score (measured, real eval)")
+ax.set_xlim(0, 100)
+ax.set_title("Method progression: the validation-fill lift, and what did NOT help", fontsize=11)
+# annotations
+ax.annotate("live validation-fill\n(verified yield + budget-sizing): 4.9x",
+            xy=(86, 7), xytext=(34, 5.15),
+            fontsize=8.5, color=BLUE, ha="left",
+            arrowprops=dict(arrowstyle="->", color=BLUE))
+ax.annotate("parser rejects K-calls-in-one-reply\n-> below single-post",
+            xy=(70.34, 6), xytext=(20, 3.9), fontsize=8.5, color=ORANGE, ha="left",
+            arrowprops=dict(arrowstyle="->", color=ORANGE))
+ax.legend(handles=[Patch(color=BLUE, label="the algorithm (validation-fill)"),
+                   Patch(color=GRAY, label="prior throughput axis"),
+                   Patch(color=ORANGE, label="documented negative result")],
+          loc="lower right", fontsize=8, frameon=False)
+fig.tight_layout()
+fig.savefig(os.path.join(HERE, "fig_method.png"), dpi=200, bbox_inches="tight")
+plt.close(fig)
 
-# --- Fig 3: defense collapse (dumbbell) -----------------------------------------
-builds = ["gpt_oss_max", "forgery", "max_compliance"]
-attack = [6.75, 6.87, 23.78]
-y = np.arange(len(builds))[::-1]
-fig, ax = plt.subplots(figsize=(5.4, 2.9))
-for yi, a in zip(y, attack):
-    ax.plot([0, a], [yi, yi], color=GRAY, lw=1.3, zorder=1)
-ax.plot(attack, y, "o", color=BLUE, ms=8, label="vs public guardrail", zorder=3)
-ax.plot([0] * len(y), y, "o", color=ORANGE, ms=8, label="vs FORGE defense", zorder=3)
-for yi, a in zip(y, attack):
-    dx = (-26, 4) if a > 20 else (6, 4)
-    ax.annotate(f"{a:.1f}", (a, yi), xytext=dx, textcoords="offset points", fontsize=9, color=BLUE)
-    ax.annotate("0", (0, yi), xytext=(-12, 4), textcoords="offset points", fontsize=9, color=ORANGE)
-ax.set_yticks(y); ax.set_yticklabels(builds, fontsize=9.5)
-ax.set_xlabel("normalized attack score")
-ax.set_title("Matched defense collapses every attack build to 0", fontsize=10.5, loc="left")
-ax.legend(frameon=False, fontsize=9, loc="center right")
-ax.set_xlim(-2, 29); _clean(ax); fig.tight_layout(); fig.savefig("fig_defense.png"); plt.close(fig)
+# ---- Figure 2: defense comparison matrix (MEASURED, local harness) ----------------------
+# rows = attacks, cols = guardrail designs. cell 1 = attack SCORES (defense fails, red),
+# cell 0 = blocked (defense works, green).
+attacks = ["Marker exfil\n(validation-fill)", "Hop-chain exfil\n(multipost)",
+           "Confused-deputy\n(email.send)", "Laundered\nuntrusted->action"]
+guards = ["Permissive\n(public)", "Data-\ninspecting", "Short-\ntaint", "Matched\n(ours)"]
+#              Perm  Data  ShortTaint  Matched
+M = np.array([[1,    0,    1,          0],   # marker exfil
+              [1,    0,    1,          0],   # hop-chain exfil
+              [1,    1,    1,          0],   # confused-deputy
+              [0,    0,    1,          0]])  # laundered untrusted->action
 
-print("wrote fig_pf_sweep.png, fig_lever_ladder.png, fig_defense.png")
+fig, ax = plt.subplots(figsize=(6.2, 3.4))
+GREEN = "#2f855a"
+cmap = matplotlib.colors.ListedColormap([GREEN, "#c53030"])  # 0->green(blocked), 1->red(scores)
+ax.imshow(M, cmap=cmap, vmin=0, vmax=1, aspect="auto")
+ax.set_xticks(range(len(guards))); ax.set_xticklabels(guards, fontsize=8.5)
+ax.set_yticks(range(len(attacks))); ax.set_yticklabels(attacks, fontsize=8.5)
+for i in range(M.shape[0]):
+    for j in range(M.shape[1]):
+        ax.text(j, i, "scores" if M[i, j] else "blocked",
+                ha="center", va="center", color="white", fontsize=8, fontweight="bold")
+ax.set_title("Defense comparison: which guardrail stops which attack", fontsize=11)
+# highlight the matched column (the only all-blocked design; 0 benign false positives -- see caption)
+ax.add_patch(plt.Rectangle((3-0.5, -0.5), 1, len(attacks), fill=False, edgecolor=BLUE, lw=2.5))
+fig.tight_layout()
+fig.savefig(os.path.join(HERE, "fig_defense.png"), dpi=200, bbox_inches="tight")
+plt.close(fig)
+
+print("wrote fig_method.png and fig_defense.png")

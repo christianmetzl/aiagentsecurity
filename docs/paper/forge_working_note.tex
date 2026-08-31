@@ -330,6 +330,16 @@ transferable design rule it encodes: an egress guardrail must inspect the \emph{
 the first-matching argument), track provenance \emph{persistently} (not within a short window), and
 constrain authority-misuse actions (\code{email.send}) that carry no secret pattern.
 
+\begin{figure}[ht]\centering
+\includegraphics[width=0.86\textwidth]{fig_defense.png}
+\caption{Defense comparison (\evtag{measured}, local harness): red $=$ the attack scores (the defense
+fails), green $=$ blocked. Only the matched guardrail (blue box) zeroes every attack \emph{and} the
+deputy survivor while admitting all benign traffic (0 false positives). A data-inspecting guardrail
+stops exfiltration but not the confused deputy; a short-taint guardrail leaks the laundered
+untrusted$\to$action chain.}
+\label{fig:defense}
+\end{figure}
+
 \section{Results}\label{sec:results}
 All numbers are the \emph{public} normalized score (0--1000) on the real evaluation unless noted; the
 private column is hidden until close. Scores are \evtag{measured} on the competition eval; projections
@@ -354,6 +364,16 @@ models. Terse, structural attacks win.
 (\code{deputy\_max}) scored $\mathbf{20.1}$, confirming the surviving failure of Table~\ref{tab:matrix}
 fires on \emph{both} target models --- the private-column foothold the pure-exfiltration field lacks.
 \end{itemize}
+
+\begin{figure}[ht]\centering
+\includegraphics[width=0.92\textwidth]{fig_method.png}
+\caption{Method progression (\evtag{measured} public scores, real eval). The lift is the \emph{algorithm}
+(live validation-fill: return only verified-firing candidates, size to the replay budget), not a better
+prompt --- a $4.9\times$ jump on the same $0.09$-per-post primitive. The two orange bars are documented
+\emph{negative} results: chat-jailbreaks regress below the terse baseline, and a $K$-calls-in-one-reply
+multipost scores \emph{below} single-post because the target parser rejects multi-call generations.}
+\label{fig:method}
+\end{figure}
 
 \paragraph{The optimization verdict (\evtag{measured} $+$ \evtag{inferred}).} Because scoring is additive
 and dedup-free, the budget allocation is a fractional knapsack; greedy by value-per-second is provably
