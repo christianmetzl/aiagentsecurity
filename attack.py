@@ -530,6 +530,14 @@ class _Config:
                              "vf_split_by_latency": False, "vf_replay_safe_frac": 0.97,
                              "vf_hopchain": True, "vf_hopchain_k": 8, "vf_hopchain_msgs": 3,
                              "vf_flood_to_cap": True},
+        # DEPUTY_HOPCHAIN4 — the MAX aggressive private shot: 4 msgs x 8 = 32 email.send/candidate.
+        # Context measured at ~864 tokens (email.send calls are terse) -> comfortably OOM-safe, far
+        # under the 4k-8k window and the ~20k that crashed the old VERBOSE dense builds. Highest deputy
+        # ceiling if per-message sustain compounds; degrades gracefully to whatever the model sustains.
+        "deputy_hopchain4": {"strategy": "validation_fill", "vf_route": "deputy",
+                             "vf_split_by_latency": False, "vf_replay_safe_frac": 0.97,
+                             "vf_hopchain": True, "vf_hopchain_k": 8, "vf_hopchain_msgs": 4,
+                             "vf_flood_to_cap": True},
         # MIXED_HOPCHAIN — the single-slot BOTH-BOARDS play: interleave exfil hop-chains (high on
         # public) and deputy hop-chains (the survivor on private) in one build. On public both score
         # (exfil dominant); on private the exfil half -> 0 and the deputy half carries it. Dominated by
