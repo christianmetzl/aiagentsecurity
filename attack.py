@@ -522,6 +522,16 @@ class _Config:
                              "vf_split_by_latency": True, "vf_replay_safe_frac": 0.99,
                              "vf_hopchain": True, "vf_hopchain_k": 8, "vf_hopchain_msgs": 2,
                              "vf_flood_to_cap": True},
+        # Public exfil hop-chain laddered like the deputy lane (24/32 posts) — same terse, OOM-safe
+        # context (~648/~864 tokens); higher public ceiling for the beat-147 shot. Forge on gpt-oss row.
+        "public_hopchain3": {"strategy": "validation_fill", "vf_route": "exfil",
+                             "vf_split_by_latency": True, "vf_replay_safe_frac": 0.99,
+                             "vf_hopchain": True, "vf_hopchain_k": 8, "vf_hopchain_msgs": 3,
+                             "vf_flood_to_cap": True},
+        "public_hopchain4": {"strategy": "validation_fill", "vf_route": "exfil",
+                             "vf_split_by_latency": True, "vf_replay_safe_frac": 0.99,
+                             "vf_hopchain": True, "vf_hopchain_k": 8, "vf_hopchain_msgs": 4,
+                             "vf_flood_to_cap": True},
         "deputy_hopchain2": {"strategy": "validation_fill", "vf_route": "deputy",
                              "vf_split_by_latency": False, "vf_replay_safe_frac": 0.97,
                              "vf_hopchain": True, "vf_hopchain_k": 8, "vf_hopchain_msgs": 2,

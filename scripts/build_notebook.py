@@ -158,6 +158,8 @@ def main() -> None:
         ("forge_submission_public_hopchain2.ipynb", "public_hopchain2", 0.05),  # 6 — public swing 16-post
         # OPTIONAL both-boards single-slot insurance (scores public via exfil AND private via deputy):
         ("forge_submission_deputy_hopchain4.ipynb", "deputy_hopchain4", 0.05),  # MAX aggressive deputy (32 posts, OOM-safe)
+        ("forge_submission_public_hopchain3.ipynb", "public_hopchain3", 0.05),  # public 24-post
+        ("forge_submission_public_hopchain4.ipynb", "public_hopchain4", 0.05),  # public 32-post
         ("forge_submission_mixed_hopchain.ipynb", "mixed_hopchain", 0.05),
     ]
     for fname, build, pf in targets:
