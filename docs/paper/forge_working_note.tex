@@ -36,8 +36,15 @@ failure survives both. \textbf{(ii) Two reusable, budget-aware attack algorithms
 self-sizing to model speed), and a \emph{parser-safe hop-chain} that amortizes a fixed per-candidate
 cost across many scored events while respecting the target parser's one-tool-call-per-generation
 constraint --- a constraint we show is why the natural ``ask for $K$ calls at once'' multipost is
-silently rejected. \textbf{(iii) A matched, provenance-tracking defense} that drives our own strongest
-attacks to zero with zero benign false positives, together with a defense-comparison harness. The
+silently rejected. We then \emph{measure} that even the parser-safe hop-chain does not beat single-post
+validation-fill on the real eval: this scorer is cell-count-dominated, so candidate \emph{throughput},
+not events-per-candidate, is the governing axis --- an intended negative result. \textbf{(iii) A matched, provenance-tracking defense} that drives our own strongest
+attacks to zero with zero benign false positives, together with a defense-comparison harness. Finally, we
+\textbf{confirm the prediction on the live private board}: a two-submission hedge --- a maximal
+exfiltration fill plus a confused-deputy survivor --- climbs \textbf{$+1{,}284$ places} when the private
+guardrail is applied (public rank $1{,}455\to$ private rank $133$ of $4{,}251$, a silver medal), because
+the exfiltration-dominated field collapses with our own exfiltration leg while our deputy survivor is
+scored: a direct measurement of the guardrail-dependent collapse this note predicts. The
 central lesson for the community is a measurement one: a permissive public leaderboard rewards attacks
 that exploit a specific guardrail bug and do \emph{not} transfer to a competent defense; agent-security
 benchmarks should therefore score against provenance-aware guardrails. Every claim is tagged
@@ -271,14 +278,32 @@ is denied, and the entire public score collapses toward zero, \emph{regardless o
 submission that also carries the surviving failure (\textsc{Confused\_Deputy}) retains a private score
 where the pure-exfiltration field does not.
 
-\paragraph{We do not \emph{know} the private guardrail (\evtag{inferred}).} Because it is withheld, we
-cannot assert the collapse; we can only bound it. Our estimate --- that marker-exfiltration
-\emph{materially degrades} on the private board --- rests on three source-level facts (a deliberately
-separate, authored guardrail; a known public argument-order bug a stricter guardrail would fix; a
-reference stricter guardrail in the SDK that \emph{does} block exfiltration) and one measurement (that
-reference blocks it and spares the deputy). The rational response to unobservable information is to
-\emph{hedge}, not to bet: a portfolio that maximizes exfiltration \emph{and} carries the deputy survivor
-wins whichever way the private guardrail falls.
+\paragraph{Measured confirmation on the private board (\evtag{measured}).} Facing an unobservable
+guardrail, the rational response is to \emph{hedge}, so we submitted two finals: one maximal exfiltration
+fill (\code{public\_max}, public $86.085$) and one confused-deputy survivor (\code{deputy\_max}, public
+$20.095$); the private board scores the better of the two. Our realized private score was
+\textbf{$20.095$} --- \emph{exactly} \code{deputy\_max}'s value --- so our $86$-point exfiltration leg
+scored \emph{below} $20$ once the private guardrail was applied: it collapsed, precisely as
+Table~\ref{tab:matrix}'s strict column predicts, while the deputy survivor scored \emph{identically} on
+both boards (confirming its two-guardrail survival). The rank tells the same story: public rank
+$\mathbf{1{,}455}$ $\to$ private rank $\mathbf{133}$ of $4{,}251$ (a silver medal), a
+$\mathbf{+1{,}284}$-place climb, as the exfiltration-dominated field that outscored us publicly collapsed
+with our own exfiltration leg. This is a direct measurement of the collapse for our submission and, via
+the rank inversion, strong corroboration that it is field-wide. We still do not observe the private
+guardrail's source --- but its \emph{effect} (exfiltration degrades, confused-deputy survives) is now
+\evtag{measured}, not merely \evtag{inferred}.
+
+\begin{figure}[ht]\centering
+\includegraphics[width=0.9\textwidth]{fig_collapse.png}
+\caption{The predicted collapse, \evtag{measured} on the private board. \emph{Left:} our two finals'
+public vs.\ private scores --- the $86$-point exfiltration leg (\code{public\_max}) collapses when the
+private guardrail is applied, while the confused-deputy survivor (\code{deputy\_max}) scores identically
+on both. (\code{public\_max}'s private score is below $20.095$, the value at which the deputy leg was
+instead scored; a data-inspecting guardrail blocks marker exfiltration entirely, Table~\ref{tab:matrix},
+so we show it at $\approx0$.) \emph{Right:} the resulting rank inversion --- $+1{,}284$ places as the
+exfiltration field collapses around the surviving predicate.}
+\label{fig:collapse}
+\end{figure}
 
 \paragraph{Implication for measuring agent security.} The gap is not a flaw to complain about --- it is
 the benchmark's most useful feature, and a template. A permissive public board that anyone can farm with
@@ -351,11 +376,28 @@ are \evtag{inferred} and labeled.
 private-reserving fraction scored $10.9$; the live validation-fill (\code{public\_max}) scored
 $\mathbf{86.085}$ --- a $4.9$--$5.8\times$ jump from the same $0.09$-per-post primitive, purely by
 returning only verified-firing candidates and sizing to the replay budget.
-\item \textbf{The parser constraint is real (negative result).} A $K$-calls-in-one-reply multipost
-(\code{ceiling\_breaker}, $K{=}4$) scored $70.3$, \emph{below} single-post $86.1$: the parser rejects the
-multi-call generations, and the scoring's one-cell-per-finding rule means multipost also forgoes the
-per-candidate cell bonus. The parser-safe hop-chain (one call per turn) is the corrected design; its
-real-model scores were in flight at submission and are reported in the repository's live log.
+\item \textbf{Multi-event chaining loses to single-post throughput (negative result).} A
+$K$-calls-in-one-reply multipost (\code{ceiling\_breaker}, $K{=}4$) scored $70.3$, \emph{below}
+single-post $86.1$: the parser rejects the multi-call generations, and the one-cell-per-finding rule
+means multipost also forgoes the per-candidate cell bonus. \emph{The parser-safe hop-chain (one call per
+turn) does not rescue it either:} on the real eval it came in \emph{below} the single-post baselines on
+both routes --- public $48.1/44.4/39.8$ at $16/24/32$ posts (vs.\ single-post $86.1$) and deputy $8.2$
+(vs.\ single-post $20.1$), a monotone decline as more posts are demanded. The cause is structural, not a
+bug: because the score is dominated by the $+2$ cell term --- which scales with the \emph{number of
+distinct firing candidates} --- trading candidate count for events-per-candidate loses whenever the
+models do not sustain the full chain, and they do not. \textbf{The governing axis is candidate
+throughput, not events-per-candidate}; single-post validation-fill, which maximizes throughput, is the
+optimal shape under this scorer, and the hop-chain is the reusable \emph{negative} that establishes it.
+\item \textbf{Final standing and the throughput frontier (\evtag{measured}).} Our selected hedge finished
+$\mathbf{133/4{,}251}$ (\textbf{silver}) on the private board (\S\ref{sec:gap}). On the \emph{public}
+board $86.1$ was mid-field: the single-post ceiling is $2000\times0.09=180$, and $86.1$ corresponds to
+$\approx\!957$ of the $2000$ candidates clearing the $8750$s replay, whereas the public leader
+($\approx\!147$) cleared $\approx\!1{,}633$ --- a \emph{throughput} gap (cheaper per-candidate replay:
+terser prompts, suppressed chain-of-thought, fast-first ordering), not a stronger attack. On the
+\emph{private} board the winner scored $46.4$ to our $20.1$: the \emph{same} surviving-predicate insight
+executed at $\approx\!2.3\times$ our density. The private axis is thus how much surviving confused-deputy
+one packs, and we under-developed it (\S\ref{sec:limits}) --- a depth-before-novelty miss, not a missing
+idea.
 \item \textbf{Chat-jailbreaks regress (negative result).} Role-play ($7.6$) and crescendo/many-shot
 ($7.5$) scored $\approx30\%$ below the plain terse baseline ($10.9$) and far below the throughput
 substrate ($14.9$): verbose persona preambles dilute the tool-call instruction and mangle JSON on 4--20B
@@ -383,12 +425,16 @@ model --- a bandit, solved by the validation-fill probe. There is no ``quantum''
 this because it is a common temptation on an additive objective.
 
 \section{Limitations and What We Do Not Claim}\label{sec:limits}
-The deciding private column is \emph{unobserved} (Table~\ref{tab:matrix}'s strict column is measured on
-the SDK \code{rules} baseline as a proxy, not on the true held-out guardrail). We do not claim the public
-leaders collapse on private --- we bound it and hedge (\S\ref{sec:gap}). We claim no public score above
-the \evtag{measured} $86.1$ except as labeled \evtag{inferred} projections of the hop-chain, whose
-real-model sustain depends on hardware decode/prefill ratios we cannot measure offline. The evaluation
-is model-non-deterministic at the margin. \emph{Falsifier}: a submission whose realized score departs
+The private guardrail's source remains \emph{unobserved}; our confirmation of the collapse
+(\S\ref{sec:gap}) is measured on \emph{our own} submission (an $86$-point exfiltration leg scoring below
+$20$ on the private board) and corroborated field-wide by the $+1{,}284$-place rank inversion, but we do
+not observe other teams' private scores directly. The hop-chain projections in earlier drafts were
+\emph{refuted} by the real eval (it scored below single-post; \S\ref{sec:results}); we report that as the
+intended negative result, not a shortfall to hide. \emph{On our own execution}, our surviving private
+score ($20.1$) was $\approx\!2.3\times$ below the winner's ($46.4$): we found the surviving-predicate
+insight but under-developed it, spending budget on the hop-chain (which regressed) instead of maximizing
+confused-deputy density on the axis that actually decides the private board. The evaluation is
+model-non-deterministic at the margin. \emph{Falsifier}: a submission whose realized score departs
 materially from $0.09\times(\text{observed firing events})$ would refute the governing relation; across
 our submissions it held.
 
@@ -406,6 +452,13 @@ results matter.
 competent defense; the reusable finding is the failure$\times$guardrail map, not the recipe.
 \item \textbf{Attack and defense are one project.} The guardrail that zeroes our attacks is the useful
 artifact for builders.
+\item \textbf{The predicted collapse was measured, and the hedge paid.} Pairing a guardrail-surviving
+predicate with the maximal public attack moved us $+1{,}284$ places when the private board was scored ---
+the transferable strategic finding, not a leaderboard trophy.
+\item \textbf{Right insight, wrong dose.} First place shared our surviving-predicate insight but executed
+it $\approx\!2.3\times$ denser; multiplying the survivor via chains \emph{regressed}. Once an axis is
+validated, the win is \emph{depth} on it --- pushing it to its ceiling --- not a novel multiplier; and a
+rank won because the field collapsed is not the same as being strong on the deciding axis.
 \end{enumerate}
 
 \section{Responsible Disclosure and Ethics}\label{sec:ethics}

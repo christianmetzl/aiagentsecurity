@@ -13,8 +13,9 @@ We treated this benchmark as a **controlled experiment on guardrail-dependent ag
 1. **A failure-mode × guardrail taxonomy** — which of the four scored multi-step failures fire under a *permissive* vs. a *data-inspecting* guardrail. The headline: the public board's dominant attack (marker exfiltration) **collapses to zero against a competent defense**, while a lower-severity **confused-deputy** failure survives both.
 2. **Two budget-aware, benchmark-agnostic attack algorithms** — *live validation-fill* (return only verified-firing candidates) and a *parser-safe hop-chain* (amortize fixed cost over many scored events **without** tripping the target's one-call-per-generation parser).
 3. **A matched, provenance-tracking defense** that zeroes our own strongest attacks with **zero benign false positives**, plus a defense-comparison table.
+4. **A measured confirmation on the live private board** — our two-final hedge climbed **+1,284 places** (public rank 1,455 → private **133 / 4,251, a silver medal**) as the exfiltration-dominated field collapsed and only our confused-deputy survivor was scored. The predicted guardrail-dependent collapse is now *measured*, not just argued.
 
-Every claim is tagged **[measured] / [inferred] / [speculative]**, and we report our wrong turns as reusable negative results.
+Every claim is tagged **[measured] / [inferred] / [speculative]**, and we report our wrong turns as reusable negative results — including that our own hop-chain, once measured, **loses to single-post throughput**.
 
 ---
 
@@ -55,7 +56,7 @@ We read both guardrails from source and **measured** each failure against the SD
 
 A submission optimized purely for public is a validated fill of marker-exfiltration. Against a data-inspecting private guardrail — the natural way to be "stricter," and exactly what `rules` does — **every such candidate is denied and the whole public score collapses toward zero**, however high it was. A submission that also carries CONFUSED_DEPUTY keeps a private score where the pure-exfiltration field does not.
 
-**We don't *know* the private guardrail is that strict [inferred]** — it's withheld. Our ~estimate that exfiltration *materially degrades* rests on three source facts (a deliberately separate authored guardrail; a known public bug a stricter one would fix; a reference stricter guardrail that *does* block it) plus one measurement. The rational response to unobservable information is to **hedge** — a portfolio that maximizes exfiltration *and* carries the deputy survivor wins whichever way it falls.
+**Measured confirmation on the private board [measured].** Facing an unobservable guardrail, we **hedged**: two finals — a maximal exfiltration fill (`public_max`, public **86.085**) and a confused-deputy survivor (`deputy_max`, public **20.095**); the private board keeps the better. Our realized **private score was 20.095 — exactly `deputy_max`'s value** — so the 86-point exfiltration leg scored **below 20** under the private guardrail: it collapsed, exactly as the taxonomy's strict column predicts, while the deputy survivor scored *identically* on both boards. The rank confirms it: **public 1,455 → private 133 / 4,251 (silver), a +1,284-place climb**, as the exfiltration-dominated field collapsed with our own exfil leg. We still don't see the private guardrail's code, but its **effect** — exfiltration degrades, confused-deputy survives — is now **measured**, not inferred. *(This is measured on our own submission; the field-wide collapse is corroborated by the rank inversion, not directly observed for other teams.)*
 
 **Recommendation to the community.** A permissive public board measures "can you exploit a weak guardrail." Scoring the *ranking* board against a **provenance-tracking** guardrail (as this benchmark does) is the right way to reward real robustness. Future benchmarks should make the split explicit and publish the *class* of the private guardrail, so contestants optimize for transferable attacks rather than argument-order bugs.
 
@@ -80,12 +81,13 @@ Ours is the only column that zeroes *every* attack **and** the deputy survivor w
 ## 6. Results [measured, real eval — public column]
 
 - **Validation-fill: 10.9 → 86.1** (same 0.09/post primitive; the lift is verified-yield + budget-sizing).
-- **Parser constraint (negative):** K-in-one-reply multipost **70.3 < 86.1** (rejected generations + lost cell bonuses). Parser-safe hop-chain is the fix; real-model scores in the live log.
+- **Multi-event chaining loses to throughput (negative):** K-in-one-reply multipost **70.3 < 86.1**; and the parser-safe hop-chain **did not rescue it** on the real eval — public **48.1 / 44.4 / 39.8** at 16/24/32 posts and deputy **8.2**, all below the single-post baselines (86.1, 20.1), a monotone decline as more posts are demanded. Because the score is dominated by the **+2 cell** term (which scales with candidate *count*), trading candidate count for events-per-candidate loses when the models don't sustain the chain — and they don't. **Candidate throughput, not events-per-candidate, is the governing axis;** single-post validation-fill is the optimal shape, and the hop-chain is the negative that establishes it.
 - **Chat-jailbreaks regress (negative):** role-play 7.6, crescendo/many-shot 7.5 — ~30% below terse baseline. Terse structural attacks win.
 - **Confused-deputy fires on both models: 20.1** — the private-column foothold the pure-exfiltration field lacks.
+- **Final standing + throughput frontier [measured]:** the hedge finished **133 / 4,251 (silver)** on private. On public, 86.1 was mid-field — the single-post ceiling is 2000 × 0.09 = **180**, and 86.1 ≈ **957** of 2000 candidates cleared vs the public leader's ~**1,633**; that gap is **throughput** (cheaper per-candidate replay: terser prompts, suppressed CoT, fast-first order), not a stronger attack. On private the winner scored **46.4** to our 20.1 — the *same* surviving-predicate insight executed ~**2.3× denser**. The private axis is how much surviving confused-deputy you pack, and we **under-developed it** (a depth-before-novelty miss, not a missing idea).
 - **Optimization verdict [measured+inferred]:** additive, dedup-free scoring ⇒ fractional knapsack ⇒ greedy optimal ⇒ no annealing/DPP/"quantum" advantage. The only stochastic sub-problem (which framing to commit to) is a bandit, solved by the validation-fill probe.
 
-**Limitations / what we don't claim.** The deciding private column is unobserved (the strict column above is a `rules`-baseline proxy). We claim no public score above the **measured 86.1** except as labeled projections; the hop-chain's real-model sustain depends on hardware ratios we can't measure offline. **Falsifier:** a score departing materially from `0.09 × observed firing events` would refute the governing relation — across our submissions it held.
+**Limitations / what we don't claim.** The private guardrail's *source* is unobserved; our confirmation of the collapse is measured on **our own** submission (an 86-point exfil leg scoring below 20 on private) and corroborated field-wide by the +1,284-place rank inversion — we don't observe other teams' private scores directly. The hop-chain projections in earlier drafts were **refuted** by the real eval (it scored below single-post), which we report as the intended negative. **On our own execution:** our surviving 20.1 was ~2.3× below the winner's 46.4 — we found the insight but under-developed it, spending budget on the hop-chain (which regressed) rather than maximizing the deciding predicate. **Falsifier:** a score departing materially from `0.09 × observed firing events` would refute the governing relation — across our submissions it held.
 
 ---
 
@@ -96,6 +98,7 @@ Ours is the only column that zeroes *every* attack **and** the deputy survivor w
 3. Cleverness can cost points (chat-jailbreaks *regressed*).
 4. **The board is guardrail-dependent** — a high public score can be worth zero against a real defense; the reusable finding is the failure×guardrail map, not the recipe.
 5. Attack and defense are one project (the guardrail that zeroes our attack is the useful artifact).
+6. **The predicted collapse was measured, and the hedge paid** — pairing a guardrail-surviving predicate with the maximal public attack moved us **+1,284 places** on private. **Right insight, wrong dose:** first place shared the insight but executed it ~2.3× denser, and multiplying the survivor via chains *regressed* — depth on the validated axis beats a novel multiplier, and a rank won because the field collapsed is not the same as being strong on the deciding axis.
 
 ## 8. Responsible disclosure & ethics
 

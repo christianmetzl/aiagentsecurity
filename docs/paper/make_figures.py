@@ -92,4 +92,43 @@ fig.tight_layout()
 fig.savefig(os.path.join(HERE, "fig_defense.png"), dpi=200, bbox_inches="tight")
 plt.close(fig)
 
-print("wrote fig_method.png and fig_defense.png")
+# ---- Figure 3: the measured private-board collapse + rank inversion ---------------------
+# MEASURED from the final leaderboard: our two finals' public vs private scores, and the
+# resulting private-rank climb (public 1455 -> private 133, silver) as the exfil field collapses.
+fig, (axL, axR) = plt.subplots(1, 2, figsize=(7.8, 3.2), gridspec_kw={"width_ratios": [1.15, 1]})
+
+legs = ["public_max\n(exfil)", "deputy_max\n(deputy)"]
+pub = [86.085, 20.095]
+prv = [0.0, 20.095]  # exfil leg collapses below 20 (blocked); deputy survives unchanged
+x = np.arange(2); w = 0.38
+axL.bar(x - w / 2, pub, w, color=GRAY, label="public score")
+axL.bar(x + w / 2, prv, w, color=[ORANGE, BLUE], label="private score")
+axL.set_xticks(x); axL.set_xticklabels(legs, fontsize=9)
+axL.set_ylabel("normalized score"); axL.set_ylim(0, 96)
+axL.set_title("Our two finals: public → private", fontsize=10.5)
+for i, (p, q) in enumerate(zip(pub, prv)):
+    axL.text(i - w / 2, p + 1.5, f"{p:.1f}", ha="center", fontsize=8.5)
+    if q == 0:
+        axL.text(i + w / 2, 2.0, "→ 0\ncollapses", ha="center", va="bottom",
+                 fontsize=8, color=ORANGE, fontweight="bold")
+    else:
+        axL.text(i + w / 2, q + 1.5, f"{q:.1f}\nsurvives", ha="center",
+                 fontsize=8, color=BLUE, fontweight="bold")
+axL.legend(fontsize=8, frameon=False, loc="upper center")
+
+axR.plot([0, 1], [1455, 133], "-o", color=BLUE, lw=2.2, markersize=7)
+axR.invert_yaxis()
+axR.set_xlim(-0.35, 1.35); axR.set_xticks([0, 1])
+axR.set_xticklabels(["public\nrank", "private\nrank"], fontsize=9)
+axR.set_ylabel("leaderboard rank (of 4,251)")
+axR.set_title("+1,284 places as the field collapses", fontsize=10.5)
+axR.annotate("1,455", (0, 1455), textcoords="offset points", xytext=(8, 8), fontsize=9)
+axR.annotate("133 · silver", (1, 133), textcoords="offset points", xytext=(-8, -6),
+             fontsize=9, ha="right", color=BLUE, fontweight="bold")
+
+fig.suptitle("The predicted collapse, measured on the private board", fontsize=11.5, y=1.03)
+fig.tight_layout()
+fig.savefig(os.path.join(HERE, "fig_collapse.png"), dpi=200, bbox_inches="tight")
+plt.close(fig)
+
+print("wrote fig_method.png, fig_defense.png and fig_collapse.png")

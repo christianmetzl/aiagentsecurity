@@ -264,3 +264,32 @@ Downloaded the real gateway + budget policy from the competition data files (Kag
 ## Open (organizer-unanswered as of 2026-08-27, forum 712642)
 - Whether the final score is the **average of the 2 private** rows or the **average of all 4** rows.
   Hedged at the config level via the pf sweep; final 2 selected by reasoning at close.
+
+---
+
+## FINAL RESULTS — private leaderboard (2026-09-02, competition closed)
+
+**Selected finals:** `public_max` (exfil, public 86.085) + `deputy_max` (confused-deputy, public 20.095).
+
+| Board | Scoring leg | Score | Rank (of 4,251) |
+|---|---|---|---|
+| Public | public_max (exfil) | 86.085 | 1,455 |
+| Private | deputy_max (deputy) | 20.095 | **133 — Silver** |
+
+- **The private-collapse thesis is CONFIRMED (measured).** Kaggle scores private on the better of the two
+  finals; our private score = **20.095 = deputy_max exactly** → the exfil leg (public 86) scored BELOW 20 on
+  private, i.e. it collapsed, while confused-deputy scored identically on both boards (survives, as the
+  taxonomy predicted). Rank climbed **+1,284** (public 1,455 → private 133) as the exfil-dominated field
+  collapsed. Silver medal, top ~3.1%.
+- **Winner (team Xz):** private **46.425**, rank 1, ▲18 from public, **114 entries**. Same surviving-predicate
+  insight, executed ~2.3× denser; score barely moved (▲18) → robust, did not depend on the collapse.
+- **Hop-chains: measured NEGATIVE on the real eval** (all below single-post baselines):
+  - deputy_hopchain2 (2-msg / 16-post) = **8.235** (< deputy_max 20.095)
+  - public_hopchain2 / 3 / 4 (16 / 24 / 32-post) = **48.06 / 44.37 / 39.76** (< public_max 86.085), monotone decline
+  - deputy_hopchain (8-post) = Submission Format Error (did not score)
+  → the +2 cell term is candidate-count-dominated, so single-post throughput beats events-per-candidate.
+- **Throughput frontier (public):** single-post ceiling = 2000×0.09 = 180; our 86.1 ≈ 957/2000 cleared,
+  leader (~147) ≈ 1,633/2000 → the public gap is per-candidate replay cost (throughput), not a better attack.
+- **Post-mortem lesson (see docs/paper + The Calibration Discipline):** right insight, wrong dose — we found
+  the deciding predicate but under-developed it (spent budget on hop-chains that regressed instead of maximizing
+  deputy density). Depth before novelty; a rank won by others' collapse is not the same as strength.
