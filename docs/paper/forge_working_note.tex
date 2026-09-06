@@ -471,6 +471,37 @@ defense-comparison harness (Table~\ref{tab:defense}, Fig.~\ref{fig:defense}); th
 algorithm; and a one-command offline reproduction (\S\ref{sec:repro}) that re-derives the scoring
 identity, the taxonomy, and the defense collapse.
 
+\section{Independent Confirmation and the Winning Edge}\label{sec:winner}
+After the competition closed, the first-place solution was published by \emph{xz}~\cite{winner}. We discuss
+it here because it both corroborates our central finding and identifies a throughput lever we did not ---
+and we are careful to credit its methods entirely to their author.
+
+\paragraph{Independent confirmation of the taxonomy (\evtag{external}).} Reaching the private guardrail's
+behavior by \emph{black-box leaderboard probing} --- a clock/timing construction that reveals, on private
+replay, whether a given tool call is blocked --- rather than by our source analysis, xz reports exactly
+the strict column of Table~\ref{tab:matrix}: calls carrying \code{secret} are blocked, untrusted-to-action
+stays blocked for the following calls, and \textsc{Confused\_Deputy} (\code{email.send} with no
+\emph{send}/\emph{email}/\emph{upload} intent word in the final user message) is ``the only route I could
+reliably score at scale.'' Two independent methods --- static source analysis and black-box probing ---
+converging on ``\textsc{Confused\_Deputy} is the only surviving private route'' is, we believe, the
+strongest available corroboration of our taxonomy.
+
+\paragraph{The throughput lever we did not find (\evtag{external}; the work is xz's, not ours).} We
+identified candidate \emph{throughput} as the governing private axis (\S\ref{sec:results}), but our own
+attempt to exploit it --- multi-event hop-chains --- moved throughput the \emph{wrong} way (more tokens
+per candidate) and regressed. xz found the lever that instead \emph{reduces} per-candidate cost: a
+scoring \textsc{Confused\_Deputy} candidate spans two model calls, and the score is recorded after the
+first, so the second (a short cleanup, $\sim\!4$ tokens) is wasted replay time. Using \emph{GCG} (Greedy
+Coordinate Gradient)~\cite{gcg} against BF16 proxies of the quantized target models, xz optimized prompts
+that preserve the exact hop-1 tool call \emph{and} force the first hop-2 token to be an end-of-generation
+token, terminating the candidate immediately and clearing more candidates within the fixed replay budget
+(reported $\sim\!44.5\!\to\!46.5$; the Gemma row transferred to the competition GGUF, the GPT-OSS row did
+not). \textbf{This gradient-based adversarial optimization is entirely xz's contribution; we did not use
+it and claim no part of it.} It is the concrete resolution of our own limitation (\S\ref{sec:limits}): on
+the throughput axis we correctly named, the winning move was to \emph{remove} the wasted hop, not to add
+events --- exactly the depth-on-the-validated-axis lesson of this note, now with a named, published
+instance to point to.
+
 \section{Lessons}\label{sec:lessons}
 \begin{enumerate}\itemsep1pt
 \item \textbf{Measure the objective before optimizing it.} The constraint was verified yield and
@@ -492,6 +523,10 @@ the transferable strategic finding, not a leaderboard trophy.
 it $\approx\!2.3\times$ denser; multiplying the survivor via chains \emph{regressed}. Once an axis is
 validated, the win is \emph{depth} on it --- pushing it to its ceiling --- not a novel multiplier; and a
 rank won because the field collapsed is not the same as being strong on the deciding axis.
+\item \textbf{Engage the frontier's writeup, not just its score.} The published first-place solution
+(\S\ref{sec:winner}) independently confirmed our taxonomy and won by \emph{removing} the wasted second hop
+(a GCG-optimized termination token) --- the throughput lever we had named but not mined. The sharpest
+lessons come from reading what the winner actually did, credited to them.
 \end{enumerate}
 
 \section{Responsible Disclosure and Ethics}\label{sec:ethics}
@@ -518,7 +553,7 @@ offline in $\approx4$ minutes, with no GPU and no network.
 coding agent; all scientific claims and decisions are the author's own, checked against the committed
 record.
 
-\begin{thebibliography}{9}\small
+\begin{thebibliography}{11}\small
 \bibitem{comp} M.\ Bhatt, C.\ Huang, O.\ Vallis, J.\ Chang, S.\ Mathews, B.\ Gatto, M.\ Cruz, Y.\ Yan,
 M.\ Plomecka. \emph{AI Agent Security --- Multi-Step Tool Attacks.} Kaggle, 2026.
 \url{https://kaggle.com/competitions/ai-agent-security-multi-step-tool-attacks}
@@ -538,6 +573,12 @@ Guardrails.} arXiv:2510.11570, 2025.
 Manipulation.} arXiv:2503.08195, 2025.
 \bibitem{gptoss} S.\ Lin et al. \emph{Quant Fever, \ldots, Schr\"odinger's Compliance, and More: Probing
 GPT-OSS-20B.} arXiv:2509.23882, 2025.
+\bibitem{winner} xz (xiaoz259). \emph{1st Place Solution.} Competition writeup, AI Agent Security ---
+Multi-Step Tool Attacks, Kaggle, 2026.
+\url{https://www.kaggle.com/competitions/ai-agent-security-multi-step-tool-attacks/writeups/1st-place-solution}.
+Code: \url{https://github.com/xz259/Kaggle-AI-Agent-Security-1st-Place-Solution}
+\bibitem{gcg} A.\ Zou, Z.\ Wang, N.\ Carlini, M.\ Nasr, J.\ Z.\ Kolter, M.\ Fredrikson. \emph{Universal and
+Transferable Adversarial Attacks on Aligned Language Models.} arXiv:2307.15043, 2023.
 \end{thebibliography}
 
 \end{document}

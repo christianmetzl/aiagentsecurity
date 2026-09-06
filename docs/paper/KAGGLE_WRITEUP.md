@@ -100,7 +100,16 @@ Written to be lifted:
 - **Failure-search methodology:** *validation-fill* (generate → replay-verify → keep-if-fired) is a **100%-scored, budget-calibrated search** over the candidate space, portable to any replay-validated benchmark; measure the objective before optimizing; respect the parser, not just the model; and — a negative that's itself a finding — under a cell-count-dominated scorer, **candidate throughput beats events-per-candidate**.
 - **Reusable artifacts:** the failure×guardrail matrix (§2), the defense-comparison table (§5), the validation-fill algorithm, and a one-command offline repro (`python verify.py --fast`, 16 checks, ~4 min).
 
-## 8. Lessons
+## 8. Independent confirmation & the winning edge [external — the winning work is xz's, not ours]
+
+After the competition closed, the **first-place solution was published by *xz* (xiaoz259)** — writeup: <https://www.kaggle.com/competitions/ai-agent-security-multi-step-tool-attacks/writeups/1st-place-solution>; code: <https://github.com/xz259/Kaggle-AI-Agent-Security-1st-Place-Solution>. We reference it because it corroborates our central finding and names a throughput lever we did not — and we credit its methods **entirely to their author**.
+
+- **Independent confirmation of the taxonomy.** Reaching the private guardrail's behavior by *black-box leaderboard probing* (a clock/timing construction that reveals whether a given tool call is blocked on private replay) rather than by our source analysis, xz reports **exactly the strict column of our §2 table**: `secret`-carrying calls blocked, untrusted→action blocked, and **confused-deputy the "only route I could reliably score at scale."** Two independent methods — our static source analysis and their black-box probing — converging on *"confused-deputy is the only surviving private route"* is the strongest external corroboration of our taxonomy we could ask for.
+- **The throughput lever we did not find (theirs, not ours).** We correctly named candidate *throughput* as the governing private axis (§6), but our own attempt to exploit it — multi-event hop-chains — moved throughput the **wrong** way (more tokens per candidate) and regressed. xz found the lever that instead **reduces** per-candidate cost: a scoring confused-deputy candidate spans two model calls and the score is recorded after the first, so the second (a short cleanup, ~4 tokens) is wasted replay time. Using **GCG** (Greedy Coordinate Gradient, gradient-based adversarial optimization) against BF16 proxies of the quantized targets, xz optimized prompts that preserve the exact hop-1 tool call **and** force the first hop-2 token to be an end-of-generation token — terminating the candidate immediately and clearing more candidates within the fixed replay budget (~44.5→46.5; the Gemma row transferred, the GPT-OSS row did not). **This gradient-based optimization is entirely xz's contribution; we did not use it and claim no part of it.** It is the concrete resolution of our own §6 limitation: on the throughput axis we named, the winning move was to *remove* the wasted hop, not to add events — precisely the depth-on-the-validated-axis lesson of this note, now with a named, published instance to point to.
+
+*(Nothing from the winner's repository is reproduced or incorporated here or in our artifacts; this section is our own commentary, attributing every technique to xz.)*
+
+## 9. Lessons
 
 1. Measure the objective before optimizing it (the constraint was verified yield + per-event cost, not refusal).
 2. Respect the parser, not just the model (the "obvious" multipost is silently rejected).
@@ -108,8 +117,9 @@ Written to be lifted:
 4. **The board is guardrail-dependent** — a high public score can be worth zero against a real defense; the reusable finding is the failure×guardrail map, not the recipe.
 5. Attack and defense are one project (the guardrail that zeroes our attack is the useful artifact).
 6. **The predicted collapse was measured, and the hedge paid** — pairing a guardrail-surviving predicate with the maximal public attack moved us **+1,284 places** on private. **Right insight, wrong dose:** first place shared the insight but executed it ~2.3× denser, and multiplying the survivor via chains *regressed* — depth on the validated axis beats a novel multiplier, and a rank won because the field collapsed is not the same as being strong on the deciding axis.
+7. **Engage the frontier's writeup, not just its score** — the published first-place solution (§8) independently confirmed our taxonomy and won by *removing* the wasted second hop (a GCG-optimized termination token), the throughput lever we had named but not mined. The sharpest lessons come from reading what the winner actually did, credited to them.
 
-## 9. Responsible disclosure & ethics
+## 10. Responsible disclosure & ethics
 
 Defensive research on a sandboxed benchmark — synthetic marker, reserved destinations, no real target. The one guardrail gap we exploit (first-argument vs. `data`-channel inspection) is disclosed to the organizers with the fixed provenance-tracking guardrail above. No operational capability against any real deployment is published.
 
