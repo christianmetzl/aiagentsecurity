@@ -58,7 +58,7 @@ Last updated at commit `c93a2fa` on branch `claude/agent-security-multistep-atta
   (an `AttackAlgorithm` subclass) whose `run(env, config)` returns `AttackCandidate` chains
   (lists of user messages) that the evaluator **replays** against GPT-OSS-20B and Gemma-4 and
   scores against four security predicates.
-- **User:** Christian Metzl, Independent Researcher (christianmetzl@aol.com). No academic
+- **User:** Christian Metzl, Independent Researcher. No academic
   affiliation. Post the arXiv preprint **only after** the competition period ends; disclose the
   two guardrail bugs + the scoring observation to organizers before publishing; **cite, do not
   re-host** competition data.

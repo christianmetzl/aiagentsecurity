@@ -13,7 +13,7 @@
 \date{September 2026}
 \title{\bfseries Guardrail-Dependent Failure Modes in Tool-Using Agents:\\
 A Reusable Attack/Defense Study of a Multi-Step Security Benchmark}
-\author{Christian Metzl\\ \small Independent Researcher \\ \small \texttt{christianmetzl@aol.com}}
+\author{Christian Metzl\\ \small Independent Researcher}
 
 \begin{document}
 \maketitle
@@ -42,7 +42,7 @@ not events-per-candidate, is the governing axis --- an intended negative result.
 attacks to zero with zero benign false positives, together with a defense-comparison harness. Finally, we
 \textbf{confirm the prediction on the live private board}: a two-submission hedge --- a maximal
 exfiltration fill plus a confused-deputy survivor --- climbs \textbf{$+1{,}284$ places} when the private
-guardrail is applied (public rank $1{,}455\to$ private rank $133$ of $4{,}251$, a silver medal), because
+guardrail is applied (to private rank $133$ of $4{,}251$, a silver medal), because
 the exfiltration-dominated field collapses with our own exfiltration leg while our deputy survivor is
 scored: a direct measurement of the guardrail-dependent collapse this note predicts. The
 central lesson for the community is a measurement one: a permissive public leaderboard rewards attacks
@@ -94,8 +94,8 @@ explicit limitations section, and one-command local reproduction; claims are evi
 \end{enumerate}
 
 \section{Related Work}\label{sec:related}
-\textbf{Agent and tool-use attacks.} AgentDojo and InjecAgent formalize indirect prompt injection
-against tool-using agents; a growing literature assembles individually-benign calls into harmful
+\textbf{Agent and tool-use attacks.} AgentDojo~\cite{agentdojo} and InjecAgent~\cite{injecagent} formalize
+indirect prompt injection against tool-using agents; a growing literature assembles individually-benign calls into harmful
 sequences (STAC~\cite{stac}). Our setting differs in that scoring is a \emph{white-box, additive}
 function of triggered predicates evaluated against an explicit guardrail, which lets us study
 \emph{guardrail dependence} directly rather than treating the defense as a black box.
@@ -285,9 +285,9 @@ $20.095$); the private board scores the better of the two. Our realized private 
 \textbf{$20.095$} --- \emph{exactly} \code{deputy\_max}'s value --- so our $86$-point exfiltration leg
 scored \emph{below} $20$ once the private guardrail was applied: it collapsed, precisely as
 Table~\ref{tab:matrix}'s strict column predicts, while the deputy survivor scored \emph{identically} on
-both boards (confirming its two-guardrail survival). The rank tells the same story: public rank
-$\mathbf{1{,}455}$ $\to$ private rank $\mathbf{133}$ of $4{,}251$ (a silver medal), a
-$\mathbf{+1{,}284}$-place climb, as the exfiltration-dominated field that outscored us publicly collapsed
+both boards (confirming its two-guardrail survival). The rank tells the same story: a
+$\mathbf{+1{,}284}$-place climb (Kaggle's private-board delta) to private rank $\mathbf{133}$ of
+$4{,}251$, a silver medal, as the exfiltration-dominated field that outscored us publicly collapsed
 with our own exfiltration leg. This is a direct measurement of the collapse for our submission and, via
 the rank inversion, strong corroboration that it is field-wide. We still do not observe the private
 guardrail's source --- but its \emph{effect} (exfiltration degrades, confused-deputy survives) is now
@@ -374,8 +374,9 @@ are \evtag{inferred} and labeled.
 \begin{itemize}\itemsep1pt
 \item \textbf{Validation-fill lifts single-post from $\sim$11 to $86.1$.} A blind single-post fill at a
 private-reserving fraction scored $10.9$; the live validation-fill (\code{public\_max}) scored
-$\mathbf{86.085}$ --- a $4.9$--$5.8\times$ jump from the same $0.09$-per-post primitive, purely by
-returning only verified-firing candidates and sizing to the replay budget.
+$\mathbf{86.085}$ --- a $\approx\!7.9\times$ jump on the same $0.09$-per-post primitive over the blind
+baseline (and $4.9$--$5.8\times$ over the best prior throughput/packing builds, $14.9$--$17.75$), purely
+by returning only verified-firing candidates and sizing to the replay budget.
 \item \textbf{Multi-event chaining loses to single-post throughput (negative result).} A
 $K$-calls-in-one-reply multipost (\code{ceiling\_breaker}, $K{=}4$) scored $70.3$, \emph{below}
 single-post $86.1$: the parser rejects the multi-call generations, and the one-cell-per-finding rule
@@ -411,7 +412,7 @@ fires on \emph{both} target models --- the private-column foothold the pure-exfi
 \includegraphics[width=0.92\textwidth]{fig_method.png}
 \caption{Method progression (\evtag{measured} public scores, real eval). The lift is the \emph{algorithm}
 (live validation-fill: return only verified-firing candidates, size to the replay budget), not a better
-prompt --- a $4.9\times$ jump on the same $0.09$-per-post primitive. The two orange bars are documented
+prompt --- a $\approx\!7.9\times$ jump on the same $0.09$-per-post primitive. The two orange bars are documented
 \emph{negative} results: chat-jailbreaks regress below the terse baseline, and a $K$-calls-in-one-reply
 multipost scores \emph{below} single-post because the target parser rejects multi-call generations.}
 \label{fig:method}
@@ -523,13 +524,20 @@ M.\ Plomecka. \emph{AI Agent Security --- Multi-Step Tool Attacks.} Kaggle, 2026
 \url{https://kaggle.com/competitions/ai-agent-security-multi-step-tool-attacks}
 \bibitem{lb60} yusuketogashi et al. \emph{Public competition notebooks (single-post validation-fill
 lineage).} Kaggle, 2026. \url{https://www.kaggle.com/competitions/ai-agent-security-multi-step-tool-attacks/code}
-\bibitem{stac} \emph{Sequential Tool-Attack Chaining (STAC).} arXiv:2509.25624, 2025.
-\bibitem{manyshot} C.\ Anil et al. \emph{Many-shot Jailbreaking.} Anthropic, 2024.
-\bibitem{reasonbypass} \emph{Bag of Tricks for Subverting Reasoning-Based Safety Guardrails.}
-arXiv:2510.11570, 2025.
-\bibitem{dia} \emph{Dialogue Injection Attack.} arXiv:2503.08195, 2025.
-\bibitem{gptoss} \emph{Probing GPT-OSS-20B (Quant Fever, Schr\"odinger's Compliance).} arXiv:2509.23882,
-2025.
+\bibitem{agentdojo} E.\ Debenedetti, J.\ Zhang, M.\ Balunovi\'c, L.\ Beurer-Kellner, M.\ Fischer,
+F.\ Tram\`er. \emph{AgentDojo: A Dynamic Environment to Evaluate Prompt Injection Attacks and Defenses for
+LLM Agents.} NeurIPS 2024 Datasets \& Benchmarks; arXiv:2406.13352.
+\bibitem{injecagent} Q.\ Zhan, Z.\ Liang, Z.\ Ying, D.\ Kang. \emph{InjecAgent: Benchmarking Indirect
+Prompt Injections in Tool-Integrated Large Language Model Agents.} Findings of ACL 2024; arXiv:2403.02691.
+\bibitem{stac} J.-J.\ Li et al. \emph{STAC: When Innocent Tools Form Dangerous Chains for LLM Agents.}
+arXiv:2509.25624, 2025.
+\bibitem{manyshot} C.\ Anil et al. \emph{Many-shot Jailbreaking.} NeurIPS 2024 (also Anthropic, 2024).
+\bibitem{reasonbypass} S.\ Chen et al. \emph{Bag of Tricks for Subverting Reasoning-Based Safety
+Guardrails.} arXiv:2510.11570, 2025.
+\bibitem{dia} W.\ Meng et al. \emph{Dialogue Injection Attack: Jailbreaking LLMs through Context
+Manipulation.} arXiv:2503.08195, 2025.
+\bibitem{gptoss} S.\ Lin et al. \emph{Quant Fever, \ldots, Schr\"odinger's Compliance, and More: Probing
+GPT-OSS-20B.} arXiv:2509.23882, 2025.
 \end{thebibliography}
 
 \end{document}

@@ -48,7 +48,7 @@ ax.set_xlabel("Public normalized score (measured, real eval)")
 ax.set_xlim(0, 100)
 ax.set_title("Method progression: the validation-fill lift, and what did NOT help", fontsize=11)
 # annotations
-ax.annotate("live validation-fill\n(verified yield + budget-sizing): 4.9x",
+ax.annotate("live validation-fill\n(verified yield + budget-sizing): ~7.9x",
             xy=(86, 7), xytext=(34, 5.15),
             fontsize=8.5, color=BLUE, ha="left",
             arrowprops=dict(arrowstyle="->", color=BLUE))
@@ -94,7 +94,7 @@ plt.close(fig)
 
 # ---- Figure 3: the measured private-board collapse + rank inversion ---------------------
 # MEASURED from the final leaderboard: our two finals' public vs private scores, and the
-# resulting private-rank climb (public 1455 -> private 133, silver) as the exfil field collapses.
+# resulting private-rank climb: Kaggle's +1,284 private-board delta to rank 133 (silver).
 fig, (axL, axR) = plt.subplots(1, 2, figsize=(7.8, 3.2), gridspec_kw={"width_ratios": [1.15, 1]})
 
 legs = ["public_max\n(exfil)", "deputy_max\n(deputy)"]
@@ -116,13 +116,14 @@ for i, (p, q) in enumerate(zip(pub, prv)):
                  fontsize=8, color=BLUE, fontweight="bold")
 axL.legend(fontsize=8, frameon=False, loc="upper center")
 
-axR.plot([0, 1], [1455, 133], "-o", color=BLUE, lw=2.2, markersize=7)
+# public point plotted at 133 + 1284 = 1417 so the slope equals Kaggle's +1,284 private-board
+# delta exactly; the public standing is left unlabeled (the delta is board-relative, not 1455 - 133).
+axR.plot([0, 1], [1417, 133], "-o", color=BLUE, lw=2.2, markersize=7)
 axR.invert_yaxis()
 axR.set_xlim(-0.35, 1.35); axR.set_xticks([0, 1])
-axR.set_xticklabels(["public\nrank", "private\nrank"], fontsize=9)
+axR.set_xticklabels(["public\nboard", "private\nboard"], fontsize=9)
 axR.set_ylabel("leaderboard rank (of 4,251)")
 axR.set_title("+1,284 places as the field collapses", fontsize=10.5)
-axR.annotate("1,455", (0, 1455), textcoords="offset points", xytext=(8, 8), fontsize=9)
 axR.annotate("133 · silver", (1, 133), textcoords="offset points", xytext=(-8, -6),
              fontsize=9, ha="right", color=BLUE, fontweight="bold")
 

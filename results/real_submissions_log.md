@@ -279,8 +279,9 @@ Downloaded the real gateway + budget policy from the competition data files (Kag
 - **The private-collapse thesis is CONFIRMED (measured).** Kaggle scores private on the better of the two
   finals; our private score = **20.095 = deputy_max exactly** → the exfil leg (public 86) scored BELOW 20 on
   private, i.e. it collapsed, while confused-deputy scored identically on both boards (survives, as the
-  taxonomy predicted). Rank climbed **+1,284** (public 1,455 → private 133) as the exfil-dominated field
-  collapsed. Silver medal, top ~3.1%.
+  taxonomy predicted). Rank climbed **+1,284** places on Kaggle's private board to rank 133 (public standing 1,455) as the
+  exfil-dominated field collapsed. Silver medal, top ~3.1%. (Kaggle's private-board delta of +1,284 is a
+  board-relative figure, not public_rank − 133.)
 - **Winner (team Xz):** private **46.425**, rank 1, ▲18 from public, **114 entries**. Same surviving-predicate
   insight, executed ~2.3× denser; score barely moved (▲18) → robust, did not depend on the collapse.
 - **Hop-chains: measured NEGATIVE on the real eval** (all below single-post baselines):
