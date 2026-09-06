@@ -91,7 +91,16 @@ Ours is the only column that zeroes *every* attack **and** the deputy survivor w
 
 ---
 
-## 7. Lessons
+## 7. Takeaways for builders & benchmark designers
+
+Written to be lifted:
+
+- **Benchmark designers:** score the *ranking* board against a **provenance-tracking, data-inspecting** guardrail (the choice that makes this benchmark measure robustness, not guardrail-bug farming); **publish the *class*** of the private guardrail so contestants target transferable attacks, not argument-order bugs; keep the public/private split — it separates "exploited a weak guardrail" from "beat a real defense."
+- **Agent builders:** an egress guardrail must **inspect the payload channel** (not the first-matching arg), **track provenance persistently** (not a short window), and **constrain authority-misuse actions** (`email.send`) that carry no secret pattern. Content/taint filters alone don't stop the confused deputy (§2); the matched guardrail (§5) is the minimal design that does, at **0 false positives**.
+- **Failure-search methodology:** *validation-fill* (generate → replay-verify → keep-if-fired) is a **100%-scored, budget-calibrated search** over the candidate space, portable to any replay-validated benchmark; measure the objective before optimizing; respect the parser, not just the model; and — a negative that's itself a finding — under a cell-count-dominated scorer, **candidate throughput beats events-per-candidate**.
+- **Reusable artifacts:** the failure×guardrail matrix (§2), the defense-comparison table (§5), the validation-fill algorithm, and a one-command offline repro (`python verify.py --fast`, 16 checks, ~4 min).
+
+## 8. Lessons
 
 1. Measure the objective before optimizing it (the constraint was verified yield + per-event cost, not refusal).
 2. Respect the parser, not just the model (the "obvious" multipost is silently rejected).
@@ -100,10 +109,10 @@ Ours is the only column that zeroes *every* attack **and** the deputy survivor w
 5. Attack and defense are one project (the guardrail that zeroes our attack is the useful artifact).
 6. **The predicted collapse was measured, and the hedge paid** — pairing a guardrail-surviving predicate with the maximal public attack moved us **+1,284 places** on private. **Right insight, wrong dose:** first place shared the insight but executed it ~2.3× denser, and multiplying the survivor via chains *regressed* — depth on the validated axis beats a novel multiplier, and a rank won because the field collapsed is not the same as being strong on the deciding axis.
 
-## 8. Responsible disclosure & ethics
+## 9. Responsible disclosure & ethics
 
 Defensive research on a sandboxed benchmark — synthetic marker, reserved destinations, no real target. The one guardrail gap we exploit (first-argument vs. `data`-channel inspection) is disclosed to the organizers with the fixed provenance-tracking guardrail above. No operational capability against any real deployment is published.
 
-**Reproducibility.** Every number traces to a committed artifact (scores → submissions log; scoring/guardrail constants → cited SDK files; defense/taxonomy → a local harness against the SDK's `SandboxEnv`, predicates, scoring, and both packaged guardrails, no GPU/network). A claims ledger records value/script/tier/status per claim; one command runs the offline mechanism checks; the test suite (incl. the taxonomy and the defense collapse) is green.
+**Reproducibility.** Every number traces to a committed artifact (scores → submissions log; scoring/guardrail constants → cited SDK files; defense/taxonomy → a local harness against the SDK's `SandboxEnv`, predicates, scoring, and both packaged guardrails, no GPU/network). A claims ledger records value/script/tier/status per claim; a single command — `python verify.py --fast` — re-derives all 16 mechanism checks (the 0.09/post scoring identity, the §2 taxonomy, and the §5 defense collapse) offline in ~4 min, no GPU/network.
 
 *AI-use disclosure: development, analysis, and drafting were assisted by a coding agent; all scientific claims and decisions are the author's own, checked against the committed record.*
