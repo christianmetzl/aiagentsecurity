@@ -143,27 +143,27 @@ fig, ax = plt.subplots(figsize=(7.0, 3.6))
 xs = np.array([0, 2000])
 ax.plot(xs, 0.09 * xs, "-", color=GRAY, lw=1.8, zorder=1,
         label="score = 0.09 x candidates cleared")
-# measured public points (candidates = score / 0.09)
-pts = [(957, 86.1, BLUE, "ours: validation-fill\n86.1  (~957 cleared)", (12, -28)),
-       (1633, 147.0, "#b7791f", "public frontier ~147\n(~1,633 cleared)", (-6, 14)),
-       (2000, 180.0, GRAY, "single-post ceiling 180\n(2,000 candidates)", (-12, -34))]
-for cx, cy, col, lab, off in pts:
-    filled = col != GRAY
-    ax.scatter([cx], [cy], s=70, color=(col if filled else "white"),
-               edgecolor=col, linewidth=1.8, zorder=3)
+# two labeled on-line points (candidates = score / 0.09); ceiling handled separately below
+pts = [(957, 86.1, BLUE, "ours: 86.1\n(~957 cleared)", (14, -26), "left", BLUE),
+       (1633, 147.0, "#b7791f", "public frontier ~147\n(~1,633 cleared)", (-10, 20), "right", "#8a5a12")]
+for cx, cy, mcol, lab, off, ha, tcol in pts:
+    ax.scatter([cx], [cy], s=70, color=mcol, edgecolor=mcol, linewidth=1.8, zorder=3)
     ax.annotate(lab, xy=(cx, cy), textcoords="offset points", xytext=off,
-                fontsize=8.3, color=col if col != "#b7791f" else "#8a5a12",
-                ha="right" if off[0] < 0 else "left",
-                fontweight="bold" if filled else "normal")
+                fontsize=8.3, color=tcol, ha=ha, fontweight="bold")
+# ceiling: open marker at the top-right corner, label parked in the empty lower-right with a leader
+ax.scatter([2000], [180], s=70, color="white", edgecolor=GRAY, linewidth=1.8, zorder=3)
+ax.annotate("single-post ceiling\n= 180 (2,000 cleared)", xy=(2000, 180), xytext=(1660, 52),
+            fontsize=8.3, color=GRAY, ha="center", va="center",
+            arrowprops=dict(arrowstyle="->", color=GRAY, lw=1.1))
 # gap arrow: ours -> public frontier (the gap is throughput, not attack quality)
 ax.annotate("", xy=(1633, 147), xytext=(957, 86.1),
             arrowprops=dict(arrowstyle="->", color=ORANGE, lw=1.6, ls=(0, (4, 2))))
-ax.text(1180, 100, "the gap is throughput,\nnot a stronger attack",
+ax.text(1005, 114, "the gap is throughput,\nnot a stronger attack",
         fontsize=8.3, color=ORANGE, ha="left", style="italic")
-ax.set_xlim(0, 2100); ax.set_ylim(0, 195)
+ax.set_xlim(0, 2120); ax.set_ylim(0, 205)
 ax.set_xlabel("candidates cleared within the replay budget")
 ax.set_ylabel("public normalized score (measured)")
-ax.set_title("The governing axis: score is linear in candidate throughput", fontsize=11)
+ax.set_title("The governing axis: score is linear in candidate throughput", fontsize=10.5, pad=10)
 ax.legend(loc="upper left", fontsize=8, frameon=False)
 fig.tight_layout()
 fig.savefig(os.path.join(HERE, "fig_frontier.png"), dpi=200, bbox_inches="tight")
