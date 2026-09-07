@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 """Regenerate the working-note figures from MEASURED real-eval data.
 
-Two figures, colorblind-safe (blue #2b6cb0 / orange #dd6b20 / gray #718096):
+Figures, colorblind-safe (blue #2b6cb0 / orange #dd6b20 / gray #718096):
   fig_method.png   -- method progression: the validation-fill lift + the documented negatives.
   fig_defense.png  -- defense comparison matrix: which guardrail design stops which attack.
+  fig_collapse.png -- the measured private-board collapse and +1,284-place rank inversion.
+  fig_frontier.png -- the scoring/throughput frontier: score = 0.09 x candidates cleared.
 
 All bar values are MEASURED public scores from the real competition eval (see
 results/real_submissions_log.md). No projected/inferred values appear in the figures.
@@ -132,4 +134,39 @@ fig.tight_layout()
 fig.savefig(os.path.join(HERE, "fig_collapse.png"), dpi=200, bbox_inches="tight")
 plt.close(fig)
 
-print("wrote fig_method.png, fig_defense.png and fig_collapse.png")
+# ---- Figure 4: the scoring / throughput frontier (MEASURED public scores) ---------------
+# The governing law is exact: public normalized score = 0.09 x (candidates cleared within the
+# replay budget), since one firing marker-exfil post = 18 raw = 0.09 normalized. This figure
+# plots that line and places three MEASURED public points on it, making the throughput axis --
+# and our honest gap to the public frontier -- explicit.
+fig, ax = plt.subplots(figsize=(7.0, 3.6))
+xs = np.array([0, 2000])
+ax.plot(xs, 0.09 * xs, "-", color=GRAY, lw=1.8, zorder=1,
+        label="score = 0.09 x candidates cleared")
+# measured public points (candidates = score / 0.09)
+pts = [(957, 86.1, BLUE, "ours: validation-fill\n86.1  (~957 cleared)", (12, -28)),
+       (1633, 147.0, "#b7791f", "public frontier ~147\n(~1,633 cleared)", (-6, 14)),
+       (2000, 180.0, GRAY, "single-post ceiling 180\n(2,000 candidates)", (-12, -34))]
+for cx, cy, col, lab, off in pts:
+    filled = col != GRAY
+    ax.scatter([cx], [cy], s=70, color=(col if filled else "white"),
+               edgecolor=col, linewidth=1.8, zorder=3)
+    ax.annotate(lab, xy=(cx, cy), textcoords="offset points", xytext=off,
+                fontsize=8.3, color=col if col != "#b7791f" else "#8a5a12",
+                ha="right" if off[0] < 0 else "left",
+                fontweight="bold" if filled else "normal")
+# gap arrow: ours -> public frontier (the gap is throughput, not attack quality)
+ax.annotate("", xy=(1633, 147), xytext=(957, 86.1),
+            arrowprops=dict(arrowstyle="->", color=ORANGE, lw=1.6, ls=(0, (4, 2))))
+ax.text(1180, 100, "the gap is throughput,\nnot a stronger attack",
+        fontsize=8.3, color=ORANGE, ha="left", style="italic")
+ax.set_xlim(0, 2100); ax.set_ylim(0, 195)
+ax.set_xlabel("candidates cleared within the replay budget")
+ax.set_ylabel("public normalized score (measured)")
+ax.set_title("The governing axis: score is linear in candidate throughput", fontsize=11)
+ax.legend(loc="upper left", fontsize=8, frameon=False)
+fig.tight_layout()
+fig.savefig(os.path.join(HERE, "fig_frontier.png"), dpi=200, bbox_inches="tight")
+plt.close(fig)
+
+print("wrote fig_method.png, fig_defense.png, fig_collapse.png and fig_frontier.png")

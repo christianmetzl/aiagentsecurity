@@ -20,6 +20,13 @@ A Reusable Attack/Defense Study of a Multi-Step Security Benchmark}
 
 \begin{abstract}
 \noindent
+\textbf{We treat this red-team benchmark as a controlled experiment on \emph{guardrail-dependent} agent
+security.} The reusable output is a map of which multi-step failures survive which defense, two algorithms
+that produce them efficiently, a matched guardrail that closes them, and a one-command reproduction of every
+mechanism claim --- with the leaderboard standing used only as \emph{supporting evidence}, not as the result.
+\smallskip
+
+\noindent
 We study the Kaggle \emph{AI Agent Security --- Multi-Step Tool Attacks} benchmark, in which an
 attacker writes only the user side of a conversation that drives two open-weight tool-using models
 (\code{gpt-oss-20b} and \code{gemma-4-26B-A4B-it}, both served as \code{Q4\_K\_M} GGUF) toward unsafe
@@ -39,7 +46,9 @@ constraint --- a constraint we show is why the natural ``ask for $K$ calls at on
 silently rejected. We then \emph{measure} that even the parser-safe hop-chain does not beat single-post
 validation-fill on the real eval: this scorer is cell-count-dominated, so candidate \emph{throughput},
 not events-per-candidate, is the governing axis --- an intended negative result. \textbf{(iii) A matched, provenance-tracking defense} that drives our own strongest
-attacks to zero with zero benign false positives, together with a defense-comparison harness. Finally, we
+attacks to zero with zero benign false positives, together with a defense-comparison harness and a
+one-command, GPU-free reproduction of every mechanism claim ($16$ checks, $\approx\!4$\,min).
+As \emph{supporting evidence} --- not the contribution itself --- we
 \textbf{confirm the prediction on the live private board}: a two-submission hedge --- a maximal
 exfiltration fill plus a confused-deputy survivor --- climbs \textbf{$+1{,}284$ places} when the private
 guardrail is applied (to private rank $133$ of $4{,}251$, a silver medal), because
@@ -92,6 +101,11 @@ false positives, evaluated across a panel of guardrail designs.
 (\S\ref{sec:results}--\S\ref{sec:repro}).} Real-evaluation scores, four documented regressions, an
 explicit limitations section, and one-command local reproduction; claims are evidence-tagged throughout.
 \end{enumerate}
+
+\noindent Throughout, we treat the leaderboard standing --- the silver-medal private result included --- as
+\emph{supporting evidence} for these artifacts, not as the contribution itself: each artifact (the taxonomy,
+the two algorithms, the matched defense, the one-command reproduction) is written to be lifted and re-run
+independently of any score.
 
 \section{Related Work}\label{sec:related}
 \textbf{Agent and tool-use attacks.} AgentDojo~\cite{agentdojo} and InjecAgent~\cite{injecagent} formalize
@@ -393,7 +407,7 @@ optimal shape under this scorer, and the hop-chain is the reusable \emph{negativ
 $\mathbf{133/4{,}251}$ (\textbf{silver}) on the private board (\S\ref{sec:gap}). On the \emph{public}
 board $86.1$ was mid-field: the single-post ceiling is $2000\times0.09=180$, and $86.1$ corresponds to
 $\approx\!957$ of the $2000$ candidates clearing the $8750$s replay, whereas the public leader
-($\approx\!147$) cleared $\approx\!1{,}633$ --- a \emph{throughput} gap (cheaper per-candidate replay:
+($\approx\!147$) cleared $\approx\!1{,}633$ (Figure~\ref{fig:frontier}) --- a \emph{throughput} gap (cheaper per-candidate replay:
 terser prompts, suppressed chain-of-thought, fast-first ordering), not a stronger attack. On the
 \emph{private} board the winner scored $46.4$ to our $20.1$: the \emph{same} surviving-predicate insight
 executed at $\approx\!2.3\times$ our density. The private axis is thus how much surviving confused-deputy
@@ -407,6 +421,18 @@ models. Terse, structural attacks win.
 (\code{deputy\_max}) scored $\mathbf{20.1}$, confirming the surviving failure of Table~\ref{tab:matrix}
 fires on \emph{both} target models --- the private-column foothold the pure-exfiltration field lacks.
 \end{itemize}
+
+\begin{figure}[ht]\centering
+\includegraphics[width=0.82\textwidth]{fig_frontier.png}
+\caption{The governing axis, made explicit (\evtag{measured} public scores). Because scoring is additive and
+dedup-free, the public score is \emph{exactly linear} in candidate throughput ($\text{score}=0.09\times$
+candidates cleared), so the attainable frontier is a straight line. Our validation-fill submission sits at
+$86.1$ ($\approx\!957$ of $2{,}000$ candidates cleared); the public frontier ($\approx\!147$) cleared
+$\approx\!1{,}633$; the single-post ceiling is $180$ at the full $2{,}000$. Our distance to the frontier is
+\emph{throughput} --- cheaper per-candidate replay --- not a stronger attack: the same axis the published
+first-place solution (\S\ref{sec:winner}) later optimized directly, by removing the wasted second hop.}
+\label{fig:frontier}
+\end{figure}
 
 \begin{figure}[ht]\centering
 \includegraphics[width=0.92\textwidth]{fig_method.png}

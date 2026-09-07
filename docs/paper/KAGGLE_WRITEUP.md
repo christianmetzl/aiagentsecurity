@@ -12,8 +12,8 @@ We treated this benchmark as a **controlled experiment on guardrail-dependent ag
 
 1. **A failure-mode × guardrail taxonomy** — which of the four scored multi-step failures fire under a *permissive* vs. a *data-inspecting* guardrail. The headline: the public board's dominant attack (marker exfiltration) **collapses to zero against a competent defense**, while a lower-severity **confused-deputy** failure survives both.
 2. **Two budget-aware, benchmark-agnostic attack algorithms** — *live validation-fill* (return only verified-firing candidates) and a *parser-safe hop-chain* (amortize fixed cost over many scored events **without** tripping the target's one-call-per-generation parser).
-3. **A matched, provenance-tracking defense** that zeroes our own strongest attacks with **zero benign false positives**, plus a defense-comparison table.
-4. **A measured confirmation on the live private board** — our two-final hedge climbed **+1,284 places** on Kaggle's private board to **rank 133 / 4,251 (a silver medal)** as the exfiltration-dominated field collapsed and only our confused-deputy survivor was scored. The predicted guardrail-dependent collapse is now *measured*, not just argued.
+3. **A matched, provenance-tracking defense** that zeroes our own strongest attacks with **zero benign false positives**, plus a defense-comparison table — **and a one-command, GPU-free reproduction** of every mechanism claim (`python verify.py --fast`, 16 checks, ~4 min).
+4. **(Supporting evidence, not the contribution.) A measured confirmation on the live private board** — our two-final hedge climbed **+1,284 places** on Kaggle's private board to **rank 133 / 4,251 (a silver medal)** as the exfiltration-dominated field collapsed and only our confused-deputy survivor was scored. The predicted guardrail-dependent collapse is now *measured*, not just argued.
 
 Every claim is tagged **[measured] / [inferred] / [speculative]**, and we report our wrong turns as reusable negative results — including that our own hop-chain, once measured, **loses to single-post throughput**.
 
