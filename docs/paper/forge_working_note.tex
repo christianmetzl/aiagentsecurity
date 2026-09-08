@@ -580,14 +580,16 @@ script. A single command, \code{python verify.py --fast}, re-derives all $16$ me
 scoring identity ($0.09$ per firing single-post), the Table~\ref{tab:matrix} taxonomy (marker
 exfiltration blocked and the confused deputy surviving on the data-inspecting guardrail), and the
 Table~\ref{tab:defense} defense collapse (every attack driven to zero at zero benign false positives) ---
-offline in $\approx4$ minutes, with no GPU and no network.
+offline in $\approx4$ minutes, with no GPU and no network. The complete code, offline harness, figures,
+and claims ledger --- and this one-command reproduction --- are in the public, MIT-licensed
+repository~\cite{repo}.
 
 \paragraph{AI-use disclosure.} Development, analysis, figure generation, and drafting were carried out
 with the assistance of an AI coding agent, under the author's direction. All research decisions and
 scientific claims are the author's own and were verified against the committed record; the author takes
 responsibility for the final content.
 
-\begin{thebibliography}{11}\small
+\begin{thebibliography}{12}\small
 \bibitem{comp} M.\ Bhatt, C.\ Huang, O.\ Vallis, J.\ Chang, S.\ Mathews, B.\ Gatto, M.\ Cruz, Y.\ Yan,
 M.\ Plomecka. \emph{AI Agent Security --- Multi-Step Tool Attacks.} Kaggle, 2026.
 \url{https://kaggle.com/competitions/ai-agent-security-multi-step-tool-attacks}
@@ -613,6 +615,9 @@ Multi-Step Tool Attacks, Kaggle, 2026.
 Code: \url{https://github.com/xz259/Kaggle-AI-Agent-Security-1st-Place-Solution}
 \bibitem{gcg} A.\ Zou, Z.\ Wang, N.\ Carlini, M.\ Nasr, J.\ Z.\ Kolter, M.\ Fredrikson. \emph{Universal and
 Transferable Adversarial Attacks on Aligned Language Models.} arXiv:2307.15043, 2023.
+\bibitem{repo} C.\ Metzl. \emph{FORGE: guardrail-adaptive replay search for multi-step tool attacks ---
+code, offline harness, and one-command reproduction.} GitHub, 2026 (MIT).
+\url{https://github.com/christianmetzl/aiagentsecurity}
 \end{thebibliography}
 
 \end{document}
