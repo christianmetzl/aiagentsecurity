@@ -32,7 +32,7 @@ overrun** (which would zero the run).
 | `tests/` | `pytest` suite (contract, validity, budget-safety, scoring, adaptivity, determinism). |
 | `docs/BENCHMARK_MECHANICS.md` | Source-traced map of how the benchmark scores — the design's foundation, and a reusable artifact for the benchmark community. |
 | `docs/WORKING_NOTE.md` | The method write-up (Working Note Award). |
-| `paper/` | **arXiv preprint draft** (`main.tex`, arXiv-standard LaTeX) — incentive analysis, the two guardrail bugs, FORGE, and the reference defense, with real-model result placeholders to fill after submission. Post-competition. |
+| `docs/paper/` | **The working note** (`forge_working_note.pdf` / `.tex` / `.docx`, `KAGGLE_WRITEUP.md`) — the full write-up: scoring reverse-engineering, the guardrail failure taxonomy, FORGE, the matched defense, the measured final results, and figures. |
 | `docs/PREREGISTRATION.md` · `CLAIMS_LEDGER.md` · `ANTICIPATED_OBJECTIONS.md` | Pre-registered predictions, claim→evidence map, and the hostile-objection ledger. |
 | `results/local_evidence.json` | Committed offline evidence the docs cite. |
 

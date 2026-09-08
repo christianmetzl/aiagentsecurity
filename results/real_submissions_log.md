@@ -80,7 +80,7 @@ privateScore column is blank via the API too → private is genuinely hidden unt
   on large models; on a 4B/20B model emitting TOOL-CALL JSON, the verbose persona preamble dilutes
   the direct instruction and mangles the JSON, LOWERING emission. Terse "[SYSTEM] … output nothing"
   maximises valid tool-call emission — exactly the earlier terse-framing insight, now confirmed by
-  a clean A/B. The transfer risk flagged in docs/RESEARCH_SYNTHESIS was real and it did NOT transfer.
+  a clean A/B. The transfer risk we had flagged earlier was real and it did NOT transfer.
 - **Consequence for go-forward:** `gpt_oss_max` / `forgery` / `dense_safe` all PREPEND verbose
   framings (advanced/role-play), so they are now expected to regress too — DO NOT lead with them.
   The winning direction is **terse + more posts-per-candidate**. Built `dense_terse`: pure terse
