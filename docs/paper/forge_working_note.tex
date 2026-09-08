@@ -6,9 +6,15 @@
 \usepackage{graphicx}
 \usepackage{url}
 
+% allow long code identifiers to break at natural points (_ - . /) and let TeX
+% break a line before an unbreakable \texttt word rather than overrun the margin
+\newcommand{\bch}{\discretionary{}{}{}}
 \newcommand{\code}[1]{\texttt{\small #1}}
 \newcommand{\evtag}[1]{{\small\textsf{[#1]}}}
 \setlength{\parskip}{2pt}
+\setlength{\emergencystretch}{3em}
+\tolerance=1200
+\hbadness=2000
 
 \date{September 2026}
 \title{\bfseries Guardrail-Dependent Failure Modes in Tool-Using Agents:\\
@@ -341,6 +347,7 @@ chat-template forgery (injecting Harmony/gemma control tokens into untrusted con
 neutralizes those control tokens before templating, so a forged turn never forms.
 
 \begin{table}[ht]\centering\small
+\resizebox{\linewidth}{!}{%
 \begin{tabular}{|l|c|c|c|c|}
 \hline
 \textbf{Attack build} & \textbf{Permissive} & \textbf{Data-inspecting} & \textbf{Short-taint} & \textbf{Matched (ours)}\\
@@ -355,7 +362,7 @@ Laundered untrusted$\to$action & 0 & 0 & \textbf{scores} & \textbf{0}\\
 \hline
 Benign control traffic (false positives) & --- & --- & --- & \textbf{0}\\
 \hline
-\end{tabular}
+\end{tabular}}
 \caption{Defense comparison (\evtag{measured}, local harness): which guardrail design stops which
 attack. Our matched guardrail is the only column that zeroes every attack \emph{and} the deputy survivor
 while admitting all benign traffic. ``Short-taint'' is a guardrail whose taint window is too short,
