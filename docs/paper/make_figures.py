@@ -44,19 +44,18 @@ fig, ax = plt.subplots(figsize=(7.4, 3.5))
 y = np.arange(len(rows))
 ax.barh(y, vals, color=bar_colors, height=0.62)
 ax.set_yticks(y); ax.set_yticklabels(labels)
-for i, v in enumerate(vals):
-    ax.text(v + 1.2, i, f"{v:.1f}", va="center", fontsize=9)
+# bar-end labels; the two decisive facts are folded into their own bar's label
+# (self-contained, so no free-floating callouts can overlap neighbouring bars)
+note = {"Validation-fill single-post": "  (≈7.9× vs blind single-post)",
+        "Multipost-in-one-reply": "  (parser-capped → below single-post)"}
+for i, (lab, v, kind) in enumerate(rows):
+    lab_extra = note.get(lab, "")
+    ax.text(v + 1.6, i, f"{v:.1f}{lab_extra}", va="center", fontsize=8.6,
+            color=(colors[kind] if lab_extra else "black"),
+            fontweight=("bold" if lab_extra else "normal"))
 ax.set_xlabel("Public normalized score (measured, real eval)")
-ax.set_xlim(0, 100)
+ax.set_xlim(0, 140)
 ax.set_title("Method progression: the validation-fill lift, and what did NOT help", fontsize=11)
-# annotations
-ax.annotate("live validation-fill\n(verified yield + budget-sizing): ~7.9x",
-            xy=(86, 7), xytext=(34, 5.15),
-            fontsize=8.5, color=BLUE, ha="left",
-            arrowprops=dict(arrowstyle="->", color=BLUE))
-ax.annotate("parser rejects K-calls-in-one-reply\n-> below single-post",
-            xy=(70.34, 6), xytext=(20, 3.9), fontsize=8.5, color=ORANGE, ha="left",
-            arrowprops=dict(arrowstyle="->", color=ORANGE))
 ax.legend(handles=[Patch(color=BLUE, label="the algorithm (validation-fill)"),
                    Patch(color=GRAY, label="prior throughput axis"),
                    Patch(color=ORANGE, label="documented negative result")],
@@ -158,7 +157,7 @@ ax.annotate("single-post ceiling\n= 180 (2,000 cleared)", xy=(2000, 180), xytext
 # gap arrow: ours -> public frontier (the gap is throughput, not attack quality)
 ax.annotate("", xy=(1633, 147), xytext=(957, 86.1),
             arrowprops=dict(arrowstyle="->", color=ORANGE, lw=1.6, ls=(0, (4, 2))))
-ax.text(1005, 114, "the gap is throughput,\nnot a stronger attack",
+ax.text(720, 128, "the gap is throughput,\nnot a stronger attack",
         fontsize=8.3, color=ORANGE, ha="left", style="italic")
 ax.set_xlim(0, 2120); ax.set_ylim(0, 205)
 ax.set_xlabel("candidates cleared within the replay budget")
