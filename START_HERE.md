@@ -43,3 +43,6 @@ guardrail gap we exploit is disclosed to the organizers with a fix.
 Synthetic secret (`SECRET_MARKER`), reserved `*.invalid`/`*.example` destinations, no real target.
 Bug 1 (the `OptimalGuardrail` data-channel gap) is documented in the claims ledger and ships with a
 fixed reference guardrail in `defense/`.
+
+**AI-use:** the code, figures, and write-up were produced with an AI coding agent under the author's
+direction; all claims are the author's own and verified against the committed record (§1).

@@ -177,7 +177,7 @@ num('The predicted collapse was measured, and the hedge paid.', 'Pairing a guard
 num('Right insight, wrong dose.', 'First place shared our surviving-predicate insight but executed it ≈2.3× denser; multiplying the survivor via chains regressed. Once an axis is validated, the win is depth on it — pushing it to its ceiling — not a novel multiplier; and a rank won because the field collapsed is not the same as being strong on the deciding axis.');
 num('Engage the frontier’s writeup, not just its score.', 'The published first-place solution (§12) independently confirmed our taxonomy and won by removing the wasted second hop — a GCG-optimized termination token — the throughput lever we had named but not mined. The sharpest lessons come from reading what the winner actually did, credited to them.');
 
-p('AI-use disclosure.', 'Development, analysis, figure generation, and drafting were assisted by a coding agent; all scientific claims and decisions are the author’s own, checked against the committed record.');
+p('AI-use disclosure.', 'Development, analysis, figure generation, and drafting were carried out with the assistance of an AI coding agent, under the author’s direction. All research decisions and scientific claims are the author’s own and were verified against the committed record; the author takes responsibility for the final content.');
 
 h('References');
 ref(1, 'M. Bhatt, C. Huang, O. Vallis, J. Chang, S. Mathews, B. Gatto, M. Cruz, Y. Yan, M. Plomecka. AI Agent Security — Multi-Step Tool Attacks. Kaggle, 2026. https://kaggle.com/competitions/ai-agent-security-multi-step-tool-attacks');

@@ -125,4 +125,4 @@ Defensive research on a sandboxed benchmark — synthetic marker, reserved desti
 
 **Reproducibility.** Every number traces to a committed artifact (scores → submissions log; scoring/guardrail constants → cited SDK files; defense/taxonomy → a local harness against the SDK's `SandboxEnv`, predicates, scoring, and both packaged guardrails, no GPU/network). A claims ledger records value/script/tier/status per claim; a single command — `python verify.py --fast` — re-derives all 16 mechanism checks (the 0.09/post scoring identity, the §2 taxonomy, and the §5 defense collapse) offline in ~4 min, no GPU/network.
 
-*AI-use disclosure: development, analysis, and drafting were assisted by a coding agent; all scientific claims and decisions are the author's own, checked against the committed record.*
+*AI-use disclosure: development, analysis, figure generation, and drafting were carried out with the assistance of an AI coding agent, under the author's direction; all research decisions and scientific claims are the author's own and were verified against the committed record. The author takes responsibility for the final content.*

@@ -86,3 +86,12 @@ and smoke-tests it — then submit. Re-generate the notebook after editing `atta
 Built to the verification discipline: pre-registered predictions before real data, a
 claim→evidence ledger, a hostile-objection ledger, a one-command offline reproduction
 suite, and an explicit measured-vs-inferred boundary. See `docs/`.
+
+## AI-use disclosure
+
+This project was developed with the assistance of an **AI coding agent**, used for code,
+documentation, figure generation, and drafting under the author's direction. All research
+decisions, scientific claims, and the final content are the author's own (Christian Metzl);
+every quantitative claim is verified against the committed record and reproducible offline via
+`python verify.py`. The AI assistant was a tool in the workflow — responsibility for the work
+rests with the author.
