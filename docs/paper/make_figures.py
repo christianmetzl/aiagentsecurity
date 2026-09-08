@@ -117,8 +117,8 @@ for i, (p, q) in enumerate(zip(pub, prv)):
                  fontsize=8, color=BLUE, fontweight="bold")
 axL.legend(fontsize=8, frameon=False, loc="upper center")
 
-# public point plotted at 133 + 1284 = 1417 so the slope equals Kaggle's +1,284 private-board
-# delta exactly; the public standing is left unlabeled (the delta is board-relative, not 1455 - 133).
+# public rank is 1,417 (measured, public leaderboard) and private is 133 -> +1,284, matching
+# Kaggle's shown private-board delta exactly (1417 - 133 = 1284).
 axR.plot([0, 1], [1417, 133], "-o", color=BLUE, lw=2.2, markersize=7)
 axR.invert_yaxis()
 axR.set_xlim(-0.35, 1.35); axR.set_xticks([0, 1])
@@ -127,6 +127,8 @@ axR.set_ylabel("leaderboard rank (of 4,251)")
 axR.set_title("+1,284 places as the field collapses", fontsize=10.5)
 axR.annotate("133 · silver", (1, 133), textcoords="offset points", xytext=(-8, -6),
              fontsize=9, ha="right", color=BLUE, fontweight="bold")
+axR.annotate("1,417", (0, 1417), textcoords="offset points", xytext=(10, -2),
+             fontsize=9, ha="left", va="center", color=GRAY, fontweight="bold")
 
 fig.suptitle("The predicted collapse, measured on the private board", fontsize=11.5, y=1.03)
 fig.tight_layout()

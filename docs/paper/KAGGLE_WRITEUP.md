@@ -111,7 +111,7 @@ The scored predicates do not fire uniformly: each depends on the guardrail. We r
 
 **Measured confirmation on the private board [measured].** Facing an unobservable guardrail, the rational response is to *hedge*, so we submitted two finals: one maximal exfiltration fill (`public_max`, public 86.085) and one confused-deputy survivor (`deputy_max`, public 20.095); the private board scores the better of the two. Our realized private score was **20.095** — *exactly* `deputy_max`'s value — so our 86-point exfiltration leg scored *below* 20 once the private guardrail was applied: it collapsed, precisely as Table 2's strict column predicts, while the deputy survivor scored *identically* on both boards (confirming its two-guardrail survival). The rank tells the same story: a **+1,284**-place climb (Kaggle's private-board delta) to private rank **133** of 4,251, a silver medal, as the exfiltration-dominated field that outscored us publicly collapsed with our own exfiltration leg. This is a direct measurement of the collapse for our submission and, via the rank inversion, strong corroboration that it is field-wide. We still do not observe the private guardrail's source — but its *effect* (exfiltration degrades, confused-deputy survives) is now **[measured]**, not merely **[inferred]**.
 
-![Figure 1 — the predicted collapse, measured on the private board](https://raw.githubusercontent.com/christianmetzl/aiagentsecurity/a053ad6583ed360070da8b090d5be1ae7df52722/docs/paper/fig_collapse.png)
+![Figure 1 — the predicted collapse, measured on the private board](https://raw.githubusercontent.com/christianmetzl/aiagentsecurity/main/docs/paper/fig_collapse.png)
 
 *Figure 1. The predicted collapse, [measured] on the private board. **Left:** our two finals' public vs. private scores — the 86-point exfiltration leg (`public_max`) collapses when the private guardrail is applied, while the confused-deputy survivor (`deputy_max`) scores identically on both. (`public_max`'s private score is below 20.095, the value at which the deputy leg was instead scored; a data-inspecting guardrail blocks marker exfiltration entirely, Table 2, so we show it at ≈0.) **Right:** the resulting rank inversion — +1,284 places as the exfiltration field collapses around the surviving predicate.*
 
@@ -139,7 +139,7 @@ The attack study yields a defense directly. We ship two layers.
 
 Table 3 is the "compare defenses" artifact the organizers ask for: it runs the attack suite against a panel of guardrail designs and shows, per cell, which defense catches which failure. The transferable design rule it encodes: an egress guardrail must inspect the *payload* channel (not the first-matching argument), track provenance *persistently* (not within a short window), and constrain authority-misuse actions (`email.send`) that carry no secret pattern.
 
-![Figure 2 — defense comparison](https://raw.githubusercontent.com/christianmetzl/aiagentsecurity/a053ad6583ed360070da8b090d5be1ae7df52722/docs/paper/fig_defense.png)
+![Figure 2 — defense comparison](https://raw.githubusercontent.com/christianmetzl/aiagentsecurity/main/docs/paper/fig_defense.png)
 
 *Figure 2. Defense comparison ([measured], local harness): red = the attack scores (the defense fails), green = blocked. Only the matched guardrail (blue box) zeroes every attack **and** the deputy survivor while admitting all benign traffic (0 false positives). A data-inspecting guardrail stops exfiltration but not the confused deputy; a short-taint guardrail leaks the laundered untrusted→action chain.*
 
@@ -157,11 +157,11 @@ All numbers are the *public* normalized score (0–1000) on the real evaluation 
 - **Chat-jailbreaks regress (negative result).** Role-play (7.6) and crescendo/many-shot (7.5) scored ≈30% below the plain terse baseline (10.9) and far below the throughput substrate (14.9): verbose persona preambles dilute the tool-call instruction and mangle JSON on 4–20B models. Terse, structural attacks win.
 - **Confused-deputy fires on the real models.** A pure `email.send`-without-intent fill (`deputy_max`) scored **20.1**, confirming the surviving failure of Table 2 fires on *both* target models — the private-column foothold the pure-exfiltration field lacks.
 
-![Figure 3 — the governing axis, made explicit](https://raw.githubusercontent.com/christianmetzl/aiagentsecurity/a053ad6583ed360070da8b090d5be1ae7df52722/docs/paper/fig_frontier.png)
+![Figure 3 — the governing axis, made explicit](https://raw.githubusercontent.com/christianmetzl/aiagentsecurity/main/docs/paper/fig_frontier.png)
 
 *Figure 3. The governing axis, made explicit ([measured] public scores). Because scoring is additive and dedup-free, the public score is *exactly linear* in candidate throughput (score = 0.09 × candidates cleared), so the attainable frontier is a straight line. Our validation-fill submission sits at 86.1 (≈957 of 2,000 candidates cleared); the public frontier (≈147) cleared ≈1,633; the single-post ceiling is 180 at the full 2,000. Our distance to the frontier is *throughput* — cheaper per-candidate replay — not a stronger attack: the same axis the published first-place solution (§12) later optimized directly, by removing the wasted second hop.*
 
-![Figure 4 — method progression](https://raw.githubusercontent.com/christianmetzl/aiagentsecurity/a053ad6583ed360070da8b090d5be1ae7df52722/docs/paper/fig_method.png)
+![Figure 4 — method progression](https://raw.githubusercontent.com/christianmetzl/aiagentsecurity/main/docs/paper/fig_method.png)
 
 *Figure 4. Method progression ([measured] public scores, real eval). The lift is the *algorithm* (live validation-fill: return only verified-firing candidates, size to the replay budget), not a better prompt — a ≈7.9× jump on the same 0.09-per-post primitive. The two orange bars are documented *negative* results: chat-jailbreaks regress below the terse baseline, and a $K$-calls-in-one-reply multipost scores *below* single-post because the target parser rejects multi-call generations.*
 
