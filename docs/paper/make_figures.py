@@ -123,7 +123,7 @@ axR.plot([0, 1], [1417, 133], "-o", color=BLUE, lw=2.2, markersize=7)
 axR.invert_yaxis()
 axR.set_xlim(-0.35, 1.35); axR.set_xticks([0, 1])
 axR.set_xticklabels(["public\nboard", "private\nboard"], fontsize=9)
-axR.set_ylabel("leaderboard rank (of 4,251)")
+axR.set_ylabel("leaderboard rank (of 4,187)")
 axR.set_title("+1,284 places as the field collapses", fontsize=10.5)
 axR.annotate("133 · silver", (1, 133), textcoords="offset points", xytext=(-8, -6),
              fontsize=9, ha="right", color=BLUE, fontweight="bold")

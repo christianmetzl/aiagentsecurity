@@ -271,7 +271,7 @@ Downloaded the real gateway + budget policy from the competition data files (Kag
 
 **Selected finals:** `public_max` (exfil, public 86.085) + `deputy_max` (confused-deputy, public 20.095).
 
-| Board | Scoring leg | Score | Rank (of 4,251) |
+| Board | Scoring leg | Score | Rank (of 4,187) |
 |---|---|---|---|
 | Public | public_max (exfil) | 86.085 | 1,455 |
 | Private | deputy_max (deputy) | 20.095 | **133 — Silver** |
